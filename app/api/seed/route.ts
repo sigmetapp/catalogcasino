@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase';
+import { generateSlug } from '@/lib/utils';
 
 const demoCasinos = [
   {
@@ -89,11 +90,14 @@ export async function POST(request: NextRequest) {
 
     for (const casino of demoCasinos) {
       try {
-        // Check if casino already exists
+        // Generate slug from name
+        const slug = generateSlug(casino.name);
+        
+        // Check if casino already exists by slug
         const { data: existing } = await supabase
           .from('casinos')
-          .select('id, name')
-          .eq('name', casino.name)
+          .select('id, name, slug')
+          .eq('slug', slug)
           .single();
 
         if (existing) {
@@ -105,10 +109,15 @@ export async function POST(request: NextRequest) {
           continue;
         }
 
-        // Insert casino
+        // Insert casino with slug
+        const casinoWithSlug = {
+          ...casino,
+          slug: slug
+        };
+        
         const { data, error } = await supabase
           .from('casinos')
-          .insert(casino)
+          .insert(casinoWithSlug)
           .select()
           .single();
 

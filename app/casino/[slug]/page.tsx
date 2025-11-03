@@ -4,10 +4,10 @@ import { notFound } from "next/navigation";
 export const dynamic = 'force-dynamic';
 
 interface PageProps {
-  params: Promise<{ id: string }>;
+  params: Promise<{ slug: string }>;
 }
 
 export default async function CasinoPage(props: PageProps) {
   const params = await props.params;
-  return <CasinoDetailPage casinoId={params.id} />;
+  return <CasinoDetailPage casinoSlug={params.slug} />;
 }

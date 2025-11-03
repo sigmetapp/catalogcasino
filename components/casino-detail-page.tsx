@@ -12,10 +12,10 @@ import { Star, CreditCard, Shield, Globe } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 interface CasinoDetailPageProps {
-  casinoId: string;
+  casinoSlug: string;
 }
 
-export function CasinoDetailPage({ casinoId }: CasinoDetailPageProps) {
+export function CasinoDetailPage({ casinoSlug }: CasinoDetailPageProps) {
   const [casino, setCasino] = useState<Casino | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
@@ -24,8 +24,13 @@ export function CasinoDetailPage({ casinoId }: CasinoDetailPageProps) {
 
   useEffect(() => {
     loadCasino();
-    loadReviews();
-  }, [casinoId]);
+  }, [casinoSlug]);
+
+  useEffect(() => {
+    if (casino) {
+      loadReviews();
+    }
+  }, [casino]);
 
   async function loadCasino() {
     try {
@@ -33,7 +38,7 @@ export function CasinoDetailPage({ casinoId }: CasinoDetailPageProps) {
       const { data, error } = await supabase
         .from("casinos")
         .select("*")
-        .eq("id", casinoId)
+        .eq("slug", casinoSlug)
         .single();
 
       if (error) throw error;
@@ -51,12 +56,14 @@ export function CasinoDetailPage({ casinoId }: CasinoDetailPageProps) {
   }
 
   async function loadReviews() {
+    if (!casino) return;
+    
     try {
       const supabase = createSupabaseClient();
       const { data, error } = await supabase
         .from("reviews")
         .select("*")
-        .eq("casino_id", casinoId)
+        .eq("casino_id", casino.id)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -211,7 +218,7 @@ export function CasinoDetailPage({ casinoId }: CasinoDetailPageProps) {
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
           Leave a Review
         </h2>
-        <ReviewForm casinoId={casinoId} onSuccess={loadReviews} />
+        <ReviewForm casinoId={casino.id} onSuccess={loadReviews} />
       </div>
 
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 border border-gray-200 dark:border-gray-700">

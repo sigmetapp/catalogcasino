@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE TABLE IF NOT EXISTS casinos (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   name TEXT NOT NULL,
+  slug TEXT NOT NULL UNIQUE,
   logo_url TEXT NOT NULL,
   bonus TEXT NOT NULL,
   license TEXT NOT NULL,
@@ -25,6 +26,9 @@ CREATE TABLE IF NOT EXISTS casinos (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+-- Create index on slug for faster lookups
+CREATE INDEX IF NOT EXISTS idx_casinos_slug ON casinos(slug);
 
 -- Create reviews table
 CREATE TABLE IF NOT EXISTS reviews (

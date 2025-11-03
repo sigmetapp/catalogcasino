@@ -113,7 +113,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 ├── app/
 │   ├── admin/          # Admin panel page
 │   ├── auth/           # Authentication page
-│   ├── casino/[id]/    # Casino detail page
+│   ├── casino/[slug]/  # Casino detail page (using slugs for SEO-friendly URLs)
 │   ├── layout.tsx      # Root layout
 │   ├── page.tsx        # Home page
 │   └── globals.css     # Global styles

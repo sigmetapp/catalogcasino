@@ -15,7 +15,7 @@ export function CasinoCard({ casino }: CasinoCardProps) {
 
   return (
     <Link
-      href={`/casino/${casino.id}`}
+      href={`/casino/${casino.slug}`}
       className="block bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden border border-gray-200 dark:border-gray-700"
     >
       <div className="p-6">
