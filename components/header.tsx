@@ -17,13 +17,18 @@ export function Header() {
   useEffect(() => {
     async function checkAdmin() {
       if (user) {
-        const supabase = createSupabaseClient();
-        const { data } = await supabase
-          .from("users")
-          .select("is_admin")
-          .eq("id", user.id)
-          .single();
-        setIsAdmin(data?.is_admin ?? false);
+        try {
+          const supabase = createSupabaseClient();
+          const { data } = await supabase
+            .from("users")
+            .select("is_admin")
+            .eq("id", user.id)
+            .single();
+          setIsAdmin(data?.is_admin ?? false);
+        } catch (error) {
+          console.error("Failed to check admin status:", error);
+          setIsAdmin(false);
+        }
       } else {
         setIsAdmin(false);
       }
@@ -32,10 +37,14 @@ export function Header() {
   }, [user]);
 
   const handleSignOut = async () => {
-    const supabase = createSupabaseClient();
-    await supabase.auth.signOut();
-    await refreshUser();
-    router.push("/");
+    try {
+      const supabase = createSupabaseClient();
+      await supabase.auth.signOut();
+      await refreshUser();
+      router.push("/");
+    } catch (error) {
+      console.error("Failed to sign out:", error);
+    }
   };
 
   const handleSignIn = () => {
