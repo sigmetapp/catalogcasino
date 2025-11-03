@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { createSupabaseClient } from "@/lib/supabase";
 import type { Casino, Review } from "@/lib/database.types";
 import { Plus, Edit, Trash2, Star, MessageSquare } from "lucide-react";
-import { useRouter } from "next/navigation";
 
 export function AdminPanel() {
   const [casinos, setCasinos] = useState<Casino[]>([]);
@@ -14,42 +13,45 @@ export function AdminPanel() {
   const [activeTab, setActiveTab] = useState<"casinos" | "reviews">("casinos");
   const [showCasinoForm, setShowCasinoForm] = useState(false);
   const [editingCasino, setEditingCasino] = useState<Casino | null>(null);
-  const router = useRouter();
 
   useEffect(() => {
-    checkAuthAndLoad();
+    let isMounted = true;
+    
+    async function doLoad() {
+      try {
+        setError(null);
+        setLoading(true);
+        // Load both casinos and reviews in parallel
+        await Promise.all([loadCasinos(), loadReviews()]);
+      } catch (err) {
+        console.error("Error loading data:", err);
+        if (isMounted) {
+          setError("Failed to load data. Please refresh the page.");
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    }
+    
+    doLoad();
+    
+    // Fallback timeout - if loading takes too long, stop loading
+    const timeout = setTimeout(() => {
+      if (isMounted) {
+        console.warn("Loading timeout - stopping loading state");
+        setLoading(false);
+        setError("Loading is taking too long. Please refresh the page.");
+      }
+    }, 10000); // 10 seconds timeout
+
+    return () => {
+      isMounted = false;
+      clearTimeout(timeout);
+    };
   }, []);
 
-  async function checkAuthAndLoad() {
-    try {
-      const supabase = createSupabaseClient();
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
-      
-      if (authError || !user) {
-        router.push("/auth");
-        return;
-      }
-
-      // Check if user is admin
-      const { data: userProfile, error: profileError } = await supabase
-        .from("users")
-        .select("is_admin")
-        .eq("id", user.id)
-        .single();
-
-      if (profileError || !userProfile?.is_admin) {
-        router.push("/");
-        return;
-      }
-
-      // Load data
-      await Promise.all([loadCasinos(), loadReviews()]);
-    } catch (err) {
-      console.error("Error checking auth:", err);
-      setError("Failed to authenticate. Please try again.");
-      setLoading(false);
-    }
-  }
 
   async function loadCasinos() {
     try {
@@ -61,10 +63,9 @@ export function AdminPanel() {
 
       if (error) throw error;
       setCasinos(data || []);
-      setError(null);
     } catch (error) {
       console.error("Error loading casinos:", error);
-      setError("Failed to load casinos. Please refresh the page.");
+      throw error;
     }
   }
 
@@ -78,10 +79,9 @@ export function AdminPanel() {
 
       if (error) throw error;
       setReviews(data || []);
-      setError(null);
     } catch (error) {
       console.error("Error loading reviews:", error);
-      setError("Failed to load reviews. Please refresh the page.");
+      throw error;
     }
   }
 
@@ -166,8 +166,7 @@ export function AdminPanel() {
           <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
           <button
             onClick={() => {
-              setError(null);
-              checkAuthAndLoad();
+              window.location.reload();
             }}
             className="mt-2 text-sm text-red-600 dark:text-red-400 hover:underline"
           >
