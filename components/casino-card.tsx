@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Star } from "lucide-react";
 import type { Casino } from "@/lib/database.types";
-import { getRatingStars } from "@/lib/utils";
+import { getRatingStars, generateSlug } from "@/lib/utils";
 
 interface CasinoCardProps {
   casino: Casino;
@@ -12,10 +12,13 @@ interface CasinoCardProps {
 
 export function CasinoCard({ casino }: CasinoCardProps) {
   const stars = getRatingStars(casino.rating_avg);
+  
+  // Fallback: use slug if available, otherwise generate from name, otherwise use id
+  const slug = casino.slug || generateSlug(casino.name) || casino.id;
 
   return (
     <Link
-      href={`/casino/${casino.slug}`}
+      href={`/casino/${slug}`}
       className="block bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden border border-gray-200 dark:border-gray-700"
     >
       <div className="p-6">

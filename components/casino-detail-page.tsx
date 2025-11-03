@@ -7,7 +7,7 @@ import Image from "next/image";
 import { RatingStars } from "./rating-stars";
 import { ReviewForm } from "./review-form";
 import { ReviewCard } from "./review-card";
-import { formatDate, getRatingStars } from "@/lib/utils";
+import { formatDate, getRatingStars, generateSlug } from "@/lib/utils";
 import { Star, CreditCard, Shield, Globe } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -25,11 +25,47 @@ export function CasinoDetailPage({ casinoSlug }: CasinoDetailPageProps) {
   const loadCasino = useCallback(async () => {
     try {
       const supabase = createSupabaseClient();
-      const { data, error } = await supabase
+      
+      // Try to find by slug first
+      let { data, error } = await supabase
         .from("casinos")
         .select("*")
         .eq("slug", casinoSlug)
         .single();
+
+      // If not found by slug, try by id (for backward compatibility with UUIDs)
+      if (error && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(casinoSlug)) {
+        const { data: dataById, error: errorById } = await supabase
+          .from("casinos")
+          .select("*")
+          .eq("id", casinoSlug)
+          .single();
+        
+        if (!errorById && dataById) {
+          data = dataById;
+          error = null;
+        }
+      }
+
+      // If still not found, try to find by matching generated slug from name
+      // This handles cases where slug might be null in DB but we have a generated slug
+      if (error) {
+        const { data: allCasinos, error: fetchError } = await supabase
+          .from("casinos")
+          .select("*");
+
+        if (!fetchError && allCasinos) {
+          const matchingCasino = allCasinos.find(casino => {
+            const generatedSlug = generateSlug(casino.name);
+            return generatedSlug === casinoSlug || casino.id === casinoSlug;
+          });
+
+          if (matchingCasino) {
+            data = matchingCasino;
+            error = null;
+          }
+        }
+      }
 
       if (error) throw error;
       if (!data) {
