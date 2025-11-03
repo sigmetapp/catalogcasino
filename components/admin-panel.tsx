@@ -4,21 +4,54 @@ import { useState, useEffect } from "react";
 import { createSupabaseClient } from "@/lib/supabase";
 import type { Casino, Review } from "@/lib/database.types";
 import { Plus, Edit, Trash2, Star, MessageSquare } from "lucide-react";
-import { useRouter } from "next/navigation";
 
 export function AdminPanel() {
   const [casinos, setCasinos] = useState<Casino[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"casinos" | "reviews">("casinos");
   const [showCasinoForm, setShowCasinoForm] = useState(false);
   const [editingCasino, setEditingCasino] = useState<Casino | null>(null);
-  const router = useRouter();
 
   useEffect(() => {
-    loadCasinos();
-    loadReviews();
+    let isMounted = true;
+    
+    async function doLoad() {
+      try {
+        setError(null);
+        setLoading(true);
+        // Load both casinos and reviews in parallel
+        await Promise.all([loadCasinos(), loadReviews()]);
+      } catch (err) {
+        console.error("Error loading data:", err);
+        if (isMounted) {
+          setError("Failed to load data. Please refresh the page.");
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    }
+    
+    doLoad();
+    
+    // Fallback timeout - if loading takes too long, stop loading
+    const timeout = setTimeout(() => {
+      if (isMounted) {
+        console.warn("Loading timeout - stopping loading state");
+        setLoading(false);
+        setError("Loading is taking too long. Please refresh the page.");
+      }
+    }, 10000); // 10 seconds timeout
+
+    return () => {
+      isMounted = false;
+      clearTimeout(timeout);
+    };
   }, []);
+
 
   async function loadCasinos() {
     try {
@@ -32,8 +65,7 @@ export function AdminPanel() {
       setCasinos(data || []);
     } catch (error) {
       console.error("Error loading casinos:", error);
-    } finally {
-      setLoading(false);
+      throw error;
     }
   }
 
@@ -49,6 +81,7 @@ export function AdminPanel() {
       setReviews(data || []);
     } catch (error) {
       console.error("Error loading reviews:", error);
+      throw error;
     }
   }
 
@@ -128,6 +161,19 @@ export function AdminPanel() {
 
   return (
     <div className="space-y-6">
+      {error && (
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+          <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
+          <button
+            onClick={() => {
+              window.location.reload();
+            }}
+            className="mt-2 text-sm text-red-600 dark:text-red-400 hover:underline"
+          >
+            Try again
+          </button>
+        </div>
+      )}
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
           Admin Panel
