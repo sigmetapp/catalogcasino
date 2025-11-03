@@ -1,5 +1,5 @@
 import { AdminPanel } from "@/components/admin-panel";
-import { createSupabaseServerClient } from "@/lib/supabase";
+import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { redirect } from "next/navigation";
 
 export default async function AdminPage() {
