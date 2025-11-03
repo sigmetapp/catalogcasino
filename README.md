@@ -195,6 +195,24 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 - Filter by country
 - Filter by minimum rating
 
+## Quick Start: Check Database Connection
+
+First, verify that your database is connected:
+
+```bash
+# Check database connection status
+curl https://your-domain.com/api/health
+```
+
+Or open in browser: `https://your-domain.com/api/health`
+
+This will show:
+- ✅ Database connection status
+- ✅ Which tables exist
+- ✅ Record counts in each table
+- ✅ Environment variables status
+- ⚠️ Connection errors (if any)
+
 ## Quick Start: Fill Database with Demo Data
 
 If your database is empty and you need to add demo casinos, see [SEEDING.md](./SEEDING.md) for detailed instructions.
