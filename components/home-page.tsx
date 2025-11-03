@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { createSupabaseClient } from "@/lib/supabase";
 import { CasinoCard } from "./casino-card";
 import type { Casino } from "@/lib/database.types";
@@ -98,37 +98,7 @@ export function HomePage() {
     loadCasinos();
   }, []);
 
-  useEffect(() => {
-    filterCasinos();
-  }, [casinos, searchQuery, licenseFilter, countryFilter, ratingFilter]);
-
-  async function loadCasinos() {
-    try {
-      const supabase = createSupabaseClient();
-      const { data, error } = await supabase
-        .from("casinos")
-        .select("*")
-        .order("rating_avg", { ascending: false });
-
-      if (error) throw error;
-      
-      // Use loaded data if available, otherwise use demo data
-      if (data && data.length > 0) {
-        setCasinos(data);
-      } else {
-        // No data in database, use demo data
-        setCasinos(demoCasinos);
-      }
-    } catch (error) {
-      console.error("Error loading casinos:", error);
-      // On error, use demo data as fallback
-      setCasinos(demoCasinos);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  function filterCasinos() {
+  const filterCasinos = useCallback(() => {
     let filtered = [...casinos];
 
     // Search filter
@@ -159,6 +129,36 @@ export function HomePage() {
     }
 
     setFilteredCasinos(filtered);
+  }, [casinos, searchQuery, licenseFilter, countryFilter, ratingFilter]);
+
+  useEffect(() => {
+    filterCasinos();
+  }, [filterCasinos]);
+
+  async function loadCasinos() {
+    try {
+      const supabase = createSupabaseClient();
+      const { data, error } = await supabase
+        .from("casinos")
+        .select("*")
+        .order("rating_avg", { ascending: false });
+
+      if (error) throw error;
+      
+      // Use loaded data if available, otherwise use demo data
+      if (data && data.length > 0) {
+        setCasinos(data);
+      } else {
+        // No data in database, use demo data
+        setCasinos(demoCasinos);
+      }
+    } catch (error) {
+      console.error("Error loading casinos:", error);
+      // On error, use demo data as fallback
+      setCasinos(demoCasinos);
+    } finally {
+      setLoading(false);
+    }
   }
 
   const licenses = Array.from(new Set(casinos.map((c) => c.license))).sort();

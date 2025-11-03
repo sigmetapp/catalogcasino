@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { createSupabaseClient } from "@/lib/supabase";
 import type { Casino, Review } from "@/lib/database.types";
 import Image from "next/image";
@@ -22,17 +22,7 @@ export function CasinoDetailPage({ casinoSlug }: CasinoDetailPageProps) {
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
-  useEffect(() => {
-    loadCasino();
-  }, [casinoSlug]);
-
-  useEffect(() => {
-    if (casino) {
-      loadReviews();
-    }
-  }, [casino]);
-
-  async function loadCasino() {
+  const loadCasino = useCallback(async () => {
     try {
       const supabase = createSupabaseClient();
       const { data, error } = await supabase
@@ -53,9 +43,9 @@ export function CasinoDetailPage({ casinoSlug }: CasinoDetailPageProps) {
     } finally {
       setLoading(false);
     }
-  }
+  }, [casinoSlug]);
 
-  async function loadReviews() {
+  const loadReviews = useCallback(async () => {
     if (!casino) return;
     
     try {
@@ -71,7 +61,17 @@ export function CasinoDetailPage({ casinoSlug }: CasinoDetailPageProps) {
     } catch (err: any) {
       console.error("Error loading reviews:", err);
     }
-  }
+  }, [casino]);
+
+  useEffect(() => {
+    loadCasino();
+  }, [loadCasino]);
+
+  useEffect(() => {
+    if (casino) {
+      loadReviews();
+    }
+  }, [casino, loadReviews]);
 
   async function handleReviewDeleted() {
     await loadReviews();
