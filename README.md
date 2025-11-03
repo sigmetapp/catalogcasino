@@ -64,6 +64,21 @@ SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 1. Go to your Supabase project dashboard
 2. Navigate to SQL Editor
 3. Run the SQL script from `supabase-schema.sql` to create all tables, policies, and triggers
+4. **Add demo data**: You have two options:
+   - **Option A (Recommended for production)**: Run the SQL script from `seed-demo-casinos.sql` in Supabase SQL Editor
+   - **Option B (For development)**: Use the API endpoint:
+     ```bash
+     # Check if seeding is needed
+     curl https://your-domain.com/api/seed
+     
+     # Seed the database (requires SEED_SECRET_TOKEN if set)
+     curl -X POST https://your-domain.com/api/seed \
+       -H "Authorization: Bearer YOUR_SECRET_TOKEN"
+     ```
+     Or use the npm script:
+     ```bash
+     npm run seed:casinos
+     ```
 
 ### 5. Configure Google OAuth
 
@@ -180,14 +195,65 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 - Filter by country
 - Filter by minimum rating
 
+## Quick Start: Check Database Connection
+
+First, verify that your database is connected:
+
+```bash
+# Check database connection status
+curl https://your-domain.com/api/health
+```
+
+Or open in browser: `https://your-domain.com/api/health`
+
+This will show:
+- ✅ Database connection status
+- ✅ Which tables exist
+- ✅ Record counts in each table
+- ✅ Environment variables status
+- ⚠️ Connection errors (if any)
+
+## Quick Start: Fill Database with Demo Data
+
+If your database is empty and you need to add demo casinos, see [SEEDING.md](./SEEDING.md) for detailed instructions.
+
+Quick options:
+- **SQL Script**: Run `seed-demo-casinos.sql` in Supabase SQL Editor (recommended)
+- **API Endpoint**: `POST /api/seed` (requires `SEED_SECRET_TOKEN` if set)
+- **NPM Script**: `npm run seed:casinos` (for local development)
+
 ## Deployment
 
 ### Vercel (Recommended)
 
+📖 **Quick start**: See [QUICK_START.md](./QUICK_START.md) for a quick checklist
+
+📖 **Detailed instructions**: See [VERCEL_SETUP.md](./VERCEL_SETUP.md) for step-by-step guide
+
+**Quick setup:**
+
 1. Push your code to GitHub
 2. Import your repository in Vercel
-3. Add environment variables in Vercel dashboard
-4. Deploy
+3. **Add environment variables in Vercel dashboard** (Settings → Environment Variables):
+   - `NEXT_PUBLIC_SUPABASE_URL` - Get from Supabase Dashboard → Settings → API → Project URL
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Get from Supabase Dashboard → Settings → API → anon public key
+   - `SUPABASE_SERVICE_ROLE_KEY` - Get from Supabase Dashboard → Settings → API → service_role key
+   - `SEED_SECRET_TOKEN` (optional, for securing the seed endpoint)
+4. **Redeploy** your application after adding variables
+5. **Initialize the database**:
+   - Go to your Supabase project dashboard
+   - Navigate to SQL Editor
+   - Run the SQL script from `seed-demo-casinos.sql` (includes schema + demo data)
+   - Or use the seed API endpoint after deployment:
+     ```bash
+     curl -X POST https://your-app.vercel.app/api/seed \
+       -H "Authorization: Bearer YOUR_SEED_SECRET_TOKEN"
+     ```
+
+**Verify connection:**
+```bash
+curl https://your-app.vercel.app/api/health
+```
 
 ### Other Platforms
 
