@@ -1,6 +1,8 @@
 import { CasinoDetailPage } from "@/components/casino-detail-page";
 import { notFound } from "next/navigation";
 
+export const dynamic = 'force-dynamic';
+
 interface PageProps {
   params: Promise<{ id: string }>;
 }
