@@ -226,14 +226,20 @@ Quick options:
 
 ### Vercel (Recommended)
 
+📖 **Quick start**: See [QUICK_START.md](./QUICK_START.md) for a quick checklist
+
+📖 **Detailed instructions**: See [VERCEL_SETUP.md](./VERCEL_SETUP.md) for step-by-step guide
+
+**Quick setup:**
+
 1. Push your code to GitHub
 2. Import your repository in Vercel
-3. Add environment variables in Vercel dashboard:
-   - `NEXT_PUBLIC_SUPABASE_URL`
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-   - `SUPABASE_SERVICE_ROLE_KEY`
+3. **Add environment variables in Vercel dashboard** (Settings → Environment Variables):
+   - `NEXT_PUBLIC_SUPABASE_URL` - Get from Supabase Dashboard → Settings → API → Project URL
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Get from Supabase Dashboard → Settings → API → anon public key
+   - `SUPABASE_SERVICE_ROLE_KEY` - Get from Supabase Dashboard → Settings → API → service_role key
    - `SEED_SECRET_TOKEN` (optional, for securing the seed endpoint)
-4. Deploy
+4. **Redeploy** your application after adding variables
 5. **Initialize the database**:
    - Go to your Supabase project dashboard
    - Navigate to SQL Editor
@@ -243,6 +249,11 @@ Quick options:
      curl -X POST https://your-app.vercel.app/api/seed \
        -H "Authorization: Bearer YOUR_SEED_SECRET_TOKEN"
      ```
+
+**Verify connection:**
+```bash
+curl https://your-app.vercel.app/api/health
+```
 
 ### Other Platforms
 
