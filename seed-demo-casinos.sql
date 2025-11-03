@@ -1,11 +1,24 @@
--- Seed 5 demo casino cards in English
--- This file can be executed in Supabase SQL editor or via psql
--- It will first create the schema if it doesn't exist, then insert demo data
+-- Complete setup: Create schema + Insert 5 demo casino cards in English
+-- Execute this file in Supabase SQL Editor
+-- This will create all necessary tables and insert demo data
+
+-- ============================================================================
+-- STEP 1: CREATE SCHEMA
+-- ============================================================================
 
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- Create casinos table if it doesn't exist
+-- Create users table
+CREATE TABLE IF NOT EXISTS users (
+  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  email TEXT NOT NULL,
+  name TEXT,
+  is_admin BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Create casinos table
 CREATE TABLE IF NOT EXISTS casinos (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   name TEXT NOT NULL,
@@ -21,23 +34,194 @@ CREATE TABLE IF NOT EXISTS casinos (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Create users table if it doesn't exist (needed for RLS policies)
-CREATE TABLE IF NOT EXISTS users (
-  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-  email TEXT NOT NULL,
-  name TEXT,
-  is_admin BOOLEAN DEFAULT FALSE,
+-- Create reviews table
+CREATE TABLE IF NOT EXISTS reviews (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  casino_id UUID NOT NULL REFERENCES casinos(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  username TEXT NOT NULL,
+  rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
+  comment TEXT NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Enable Row Level Security (RLS) if not already enabled
-ALTER TABLE casinos ENABLE ROW LEVEL SECURITY;
+-- Create indexes
+CREATE INDEX IF NOT EXISTS idx_reviews_casino_id ON reviews(casino_id);
+CREATE INDEX IF NOT EXISTS idx_reviews_user_id ON reviews(user_id);
+CREATE INDEX IF NOT EXISTS idx_casinos_rating_avg ON casinos(rating_avg);
 
--- Temporarily disable RLS for casinos table to allow initial data insertion
--- This is safe because we're using IF NOT EXISTS to avoid duplicates
+-- ============================================================================
+-- STEP 2: SETUP RLS (Row Level Security)
+-- ============================================================================
+
+-- Enable RLS
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE casinos ENABLE ROW LEVEL SECURITY;
+ALTER TABLE reviews ENABLE ROW LEVEL SECURITY;
+
+-- Drop existing policies if they exist (to avoid conflicts)
+DROP POLICY IF EXISTS "Users can view all profiles" ON users;
+DROP POLICY IF EXISTS "Users can update their own profile" ON users;
+DROP POLICY IF EXISTS "Anyone can view casinos" ON casinos;
+DROP POLICY IF EXISTS "Only admins can insert casinos" ON casinos;
+DROP POLICY IF EXISTS "Only admins can update casinos" ON casinos;
+DROP POLICY IF EXISTS "Only admins can delete casinos" ON casinos;
+DROP POLICY IF EXISTS "Anyone can view reviews" ON reviews;
+DROP POLICY IF EXISTS "Authenticated users can insert reviews" ON reviews;
+DROP POLICY IF EXISTS "Users can delete their own reviews" ON reviews;
+DROP POLICY IF EXISTS "Admins can delete any review" ON reviews;
+
+-- RLS Policies for users
+CREATE POLICY "Users can view all profiles"
+  ON users FOR SELECT
+  USING (true);
+
+CREATE POLICY "Users can update their own profile"
+  ON users FOR UPDATE
+  USING (auth.uid() = id);
+
+-- RLS Policies for casinos
+CREATE POLICY "Anyone can view casinos"
+  ON casinos FOR SELECT
+  USING (true);
+
+CREATE POLICY "Only admins can insert casinos"
+  ON casinos FOR INSERT
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM users
+      WHERE users.id = auth.uid() AND users.is_admin = TRUE
+    )
+  );
+
+CREATE POLICY "Only admins can update casinos"
+  ON casinos FOR UPDATE
+  USING (
+    EXISTS (
+      SELECT 1 FROM users
+      WHERE users.id = auth.uid() AND users.is_admin = TRUE
+    )
+  );
+
+CREATE POLICY "Only admins can delete casinos"
+  ON casinos FOR DELETE
+  USING (
+    EXISTS (
+      SELECT 1 FROM users
+      WHERE users.id = auth.uid() AND users.is_admin = TRUE
+    )
+  );
+
+-- RLS Policies for reviews
+CREATE POLICY "Anyone can view reviews"
+  ON reviews FOR SELECT
+  USING (true);
+
+CREATE POLICY "Authenticated users can insert reviews"
+  ON reviews FOR INSERT
+  WITH CHECK (auth.uid() IS NOT NULL);
+
+CREATE POLICY "Users can delete their own reviews"
+  ON reviews FOR DELETE
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Admins can delete any review"
+  ON reviews FOR DELETE
+  USING (
+    EXISTS (
+      SELECT 1 FROM users
+      WHERE users.id = auth.uid() AND users.is_admin = TRUE
+    )
+  );
+
+-- ============================================================================
+-- STEP 3: CREATE FUNCTIONS AND TRIGGERS
+-- ============================================================================
+
+-- Function to create user profile on signup
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO public.users (id, email, name)
+  VALUES (
+    NEW.id,
+    NEW.email,
+    COALESCE(NEW.raw_user_meta_data->>'full_name', NEW.email)
+  );
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Trigger to create user profile on signup
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+-- Function to update casino rating when review is added
+CREATE OR REPLACE FUNCTION public.update_casino_rating()
+RETURNS TRIGGER AS $$
+BEGIN
+  UPDATE casinos
+  SET
+    rating_avg = (
+      SELECT COALESCE(AVG(rating)::NUMERIC(3, 2), 0)
+      FROM reviews
+      WHERE casino_id = NEW.casino_id
+    ),
+    rating_count = (
+      SELECT COUNT(*)
+      FROM reviews
+      WHERE casino_id = NEW.casino_id
+    ),
+    updated_at = NOW()
+  WHERE id = NEW.casino_id;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger to update casino rating on review insert
+DROP TRIGGER IF EXISTS on_review_inserted ON reviews;
+CREATE TRIGGER on_review_inserted
+  AFTER INSERT ON reviews
+  FOR EACH ROW EXECUTE FUNCTION public.update_casino_rating();
+
+-- Function to update casino rating when review is deleted
+CREATE OR REPLACE FUNCTION public.update_casino_rating_on_delete()
+RETURNS TRIGGER AS $$
+BEGIN
+  UPDATE casinos
+  SET
+    rating_avg = COALESCE((
+      SELECT AVG(rating)::NUMERIC(3, 2)
+      FROM reviews
+      WHERE casino_id = OLD.casino_id
+    ), 0),
+    rating_count = (
+      SELECT COUNT(*)
+      FROM reviews
+      WHERE casino_id = OLD.casino_id
+    ),
+    updated_at = NOW()
+  WHERE id = OLD.casino_id;
+  RETURN OLD;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger to update casino rating on review delete
+DROP TRIGGER IF EXISTS on_review_deleted ON reviews;
+CREATE TRIGGER on_review_deleted
+  AFTER DELETE ON reviews
+  FOR EACH ROW EXECUTE FUNCTION public.update_casino_rating_on_delete();
+
+-- ============================================================================
+-- STEP 4: INSERT DEMO CASINOS (temporarily disable RLS for insert)
+-- ============================================================================
+
+-- Temporarily disable RLS for casinos to allow initial data insertion
 ALTER TABLE casinos DISABLE ROW LEVEL SECURITY;
 
--- Insert demo casinos (only if they don't exist)
+-- Insert demo casinos (only if they don't already exist)
 INSERT INTO casinos (name, logo_url, bonus, license, description, country, payment_methods, rating_avg, rating_count)
 SELECT 
   'Royal Vegas Casino',
@@ -106,83 +290,18 @@ WHERE NOT EXISTS (SELECT 1 FROM casinos WHERE name = 'Casumo Casino');
 -- Re-enable RLS for casinos table
 ALTER TABLE casinos ENABLE ROW LEVEL SECURITY;
 
--- Create RLS policies if they don't exist
-DO $$
-BEGIN
-  -- Policy for viewing casinos
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_policies 
-    WHERE schemaname = 'public' 
-    AND tablename = 'casinos' 
-    AND policyname = 'Anyone can view casinos'
-  ) THEN
-    CREATE POLICY "Anyone can view casinos"
-      ON casinos FOR SELECT
-      USING (true);
-  END IF;
+-- ============================================================================
+-- STEP 5: VERIFY INSERTIONS
+-- ============================================================================
 
-  -- Policy for inserting casinos (only admins)
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_policies 
-    WHERE schemaname = 'public' 
-    AND tablename = 'casinos' 
-    AND policyname = 'Only admins can insert casinos'
-  ) THEN
-    CREATE POLICY "Only admins can insert casinos"
-      ON casinos FOR INSERT
-      WITH CHECK (
-        EXISTS (
-          SELECT 1 FROM users
-          WHERE users.id = auth.uid() AND users.is_admin = TRUE
-        )
-      );
-  END IF;
-
-  -- Policy for updating casinos (only admins)
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_policies 
-    WHERE schemaname = 'public' 
-    AND tablename = 'casinos' 
-    AND policyname = 'Only admins can update casinos'
-  ) THEN
-    CREATE POLICY "Only admins can update casinos"
-      ON casinos FOR UPDATE
-      USING (
-        EXISTS (
-          SELECT 1 FROM users
-          WHERE users.id = auth.uid() AND users.is_admin = TRUE
-        )
-      );
-  END IF;
-
-  -- Policy for deleting casinos (only admins)
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_policies 
-    WHERE schemaname = 'public' 
-    AND tablename = 'casinos' 
-    AND policyname = 'Only admins can delete casinos'
-  ) THEN
-    CREATE POLICY "Only admins can delete casinos"
-      ON casinos FOR DELETE
-      USING (
-        EXISTS (
-          SELECT 1 FROM users
-          WHERE users.id = auth.uid() AND users.is_admin = TRUE
-        )
-      );
-  END IF;
-END $$;
-
--- Create index if it doesn't exist
-CREATE INDEX IF NOT EXISTS idx_casinos_rating_avg ON casinos(rating_avg);
-
--- Verify the insertions
+-- Show the inserted casinos
 SELECT 
   name, 
   license, 
   country, 
   rating_avg, 
-  rating_count 
+  rating_count,
+  created_at
 FROM casinos 
 WHERE name IN (
   'Royal Vegas Casino',
