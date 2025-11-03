@@ -6,6 +6,80 @@ import { CasinoCard } from "./casino-card";
 import type { Casino } from "@/lib/database.types";
 import { Search, Filter } from "lucide-react";
 
+// Demo data fallback
+const demoCasinos: Casino[] = [
+  {
+    id: "demo-1",
+    name: "Royal Vegas Casino",
+    logo_url: "https://via.placeholder.com/150?text=Royal+Vegas",
+    bonus: "Welcome Bonus: $500 + 100 Free Spins",
+    license: "Malta Gaming Authority",
+    description: "Royal Vegas Casino offers a premium gaming experience with over 500 slot games, live dealer tables, and a comprehensive loyalty program. Established in 2000, it has become one of the most trusted online casinos in the industry.",
+    country: "Malta",
+    payment_methods: ["Visa", "Mastercard", "PayPal", "Skrill", "Neteller", "Bitcoin"],
+    rating_avg: 4.5,
+    rating_count: 234,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: "demo-2",
+    name: "Betway Casino",
+    logo_url: "https://via.placeholder.com/150?text=Betway",
+    bonus: "100% Match Bonus up to $1,000",
+    license: "UK Gambling Commission",
+    description: "Betway Casino is a leading online casino platform known for its extensive game library, fast payouts, and excellent customer support. The casino features games from top providers and offers a mobile-optimized experience.",
+    country: "United Kingdom",
+    payment_methods: ["Visa", "Mastercard", "PayPal", "Bank Transfer", "Ethereum"],
+    rating_avg: 4.7,
+    rating_count: 189,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: "demo-3",
+    name: "LeoVegas Casino",
+    logo_url: "https://via.placeholder.com/150?text=LeoVegas",
+    bonus: "Up to $1,200 + 120 Free Spins",
+    license: "Malta Gaming Authority",
+    description: "LeoVegas is the \"King of Mobile Casino\" with an award-winning mobile platform. It offers a wide selection of slots, table games, and live casino options. The casino is known for its quick withdrawals and 24/7 customer service.",
+    country: "Sweden",
+    payment_methods: ["Visa", "Mastercard", "PayPal", "Trustly", "Zimpler"],
+    rating_avg: 4.6,
+    rating_count: 312,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: "demo-4",
+    name: "888 Casino",
+    logo_url: "https://via.placeholder.com/150?text=888+Casino",
+    bonus: "New Player Package: $400 + 88 Free Spins",
+    license: "UK Gambling Commission",
+    description: "888 Casino is one of the oldest and most respected online casinos, operating since 1997. It offers a diverse range of games including exclusive titles, live dealer games, and a comprehensive sportsbook. The platform is available in multiple languages.",
+    country: "United Kingdom",
+    payment_methods: ["Visa", "Mastercard", "PayPal", "Skrill", "Neteller", "Apple Pay"],
+    rating_avg: 4.4,
+    rating_count: 278,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: "demo-5",
+    name: "Casumo Casino",
+    logo_url: "https://via.placeholder.com/150?text=Casumo",
+    bonus: "Welcome Bonus: $1,200 + 200 Free Spins",
+    license: "Malta Gaming Authority",
+    description: "Casumo is an innovative casino platform that gamifies the online casino experience. Players earn rewards and level up while playing. The casino features a unique design, fast payments, and a vast selection of games from top providers.",
+    country: "Malta",
+    payment_methods: ["Visa", "Mastercard", "PayPal", "Skrill", "Trustly", "Bitcoin"],
+    rating_avg: 4.8,
+    rating_count: 156,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+];
+
 export function HomePage() {
   const [casinos, setCasinos] = useState<Casino[]>([]);
   const [filteredCasinos, setFilteredCasinos] = useState<Casino[]>([]);
@@ -32,9 +106,18 @@ export function HomePage() {
         .order("rating_avg", { ascending: false });
 
       if (error) throw error;
-      setCasinos(data || []);
+      
+      // Use loaded data if available, otherwise use demo data
+      if (data && data.length > 0) {
+        setCasinos(data);
+      } else {
+        // No data in database, use demo data
+        setCasinos(demoCasinos);
+      }
     } catch (error) {
       console.error("Error loading casinos:", error);
+      // On error, use demo data as fallback
+      setCasinos(demoCasinos);
     } finally {
       setLoading(false);
     }
