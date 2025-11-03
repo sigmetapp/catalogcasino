@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
 // Client-side Supabase client
 export const createSupabaseClient = () => {
@@ -16,7 +17,22 @@ export const createSupabaseClient = () => {
     throw new Error('Missing Supabase environment variables: NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY must be set');
   }
 
-  return createClient(supabaseUrl, supabaseAnonKey);
+  // Use createClientComponentClient for client-side to properly handle cookies
+  if (typeof window !== 'undefined') {
+    return createClientComponentClient({
+      supabaseUrl,
+      supabaseKey: supabaseAnonKey,
+    });
+  }
+
+  // Server-side fallback
+  return createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
+    },
+  });
 };
 
 // Admin client (for server-side admin operations)

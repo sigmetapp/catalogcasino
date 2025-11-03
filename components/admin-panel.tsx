@@ -10,15 +10,46 @@ export function AdminPanel() {
   const [casinos, setCasinos] = useState<Casino[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"casinos" | "reviews">("casinos");
   const [showCasinoForm, setShowCasinoForm] = useState(false);
   const [editingCasino, setEditingCasino] = useState<Casino | null>(null);
   const router = useRouter();
 
   useEffect(() => {
-    loadCasinos();
-    loadReviews();
+    checkAuthAndLoad();
   }, []);
+
+  async function checkAuthAndLoad() {
+    try {
+      const supabase = createSupabaseClient();
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      
+      if (authError || !user) {
+        router.push("/auth");
+        return;
+      }
+
+      // Check if user is admin
+      const { data: userProfile, error: profileError } = await supabase
+        .from("users")
+        .select("is_admin")
+        .eq("id", user.id)
+        .single();
+
+      if (profileError || !userProfile?.is_admin) {
+        router.push("/");
+        return;
+      }
+
+      // Load data
+      await Promise.all([loadCasinos(), loadReviews()]);
+    } catch (err) {
+      console.error("Error checking auth:", err);
+      setError("Failed to authenticate. Please try again.");
+      setLoading(false);
+    }
+  }
 
   async function loadCasinos() {
     try {
@@ -30,10 +61,10 @@ export function AdminPanel() {
 
       if (error) throw error;
       setCasinos(data || []);
+      setError(null);
     } catch (error) {
       console.error("Error loading casinos:", error);
-    } finally {
-      setLoading(false);
+      setError("Failed to load casinos. Please refresh the page.");
     }
   }
 
@@ -47,8 +78,10 @@ export function AdminPanel() {
 
       if (error) throw error;
       setReviews(data || []);
+      setError(null);
     } catch (error) {
       console.error("Error loading reviews:", error);
+      setError("Failed to load reviews. Please refresh the page.");
     }
   }
 
@@ -128,6 +161,20 @@ export function AdminPanel() {
 
   return (
     <div className="space-y-6">
+      {error && (
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+          <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
+          <button
+            onClick={() => {
+              setError(null);
+              checkAuthAndLoad();
+            }}
+            className="mt-2 text-sm text-red-600 dark:text-red-400 hover:underline"
+          >
+            Try again
+          </button>
+        </div>
+      )}
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
           Admin Panel
