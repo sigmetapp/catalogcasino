@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { createSupabaseClient } from "@/lib/supabase";
 import { CasinoCard } from "./casino-card";
 import type { Casino } from "@/lib/database.types";
@@ -11,6 +11,7 @@ const demoCasinos: Casino[] = [
   {
     id: "demo-1",
     name: "Royal Vegas Casino",
+    slug: "royal-vegas-casino",
     logo_url: "https://via.placeholder.com/150?text=Royal+Vegas",
     bonus: "Welcome Bonus: $500 + 100 Free Spins",
     license: "Malta Gaming Authority",
@@ -25,6 +26,7 @@ const demoCasinos: Casino[] = [
   {
     id: "demo-2",
     name: "Betway Casino",
+    slug: "betway-casino",
     logo_url: "https://via.placeholder.com/150?text=Betway",
     bonus: "100% Match Bonus up to $1,000",
     license: "UK Gambling Commission",
@@ -39,6 +41,7 @@ const demoCasinos: Casino[] = [
   {
     id: "demo-3",
     name: "LeoVegas Casino",
+    slug: "leovegas-casino",
     logo_url: "https://via.placeholder.com/150?text=LeoVegas",
     bonus: "Up to $1,200 + 120 Free Spins",
     license: "Malta Gaming Authority",
@@ -53,6 +56,7 @@ const demoCasinos: Casino[] = [
   {
     id: "demo-4",
     name: "888 Casino",
+    slug: "888-casino",
     logo_url: "https://via.placeholder.com/150?text=888+Casino",
     bonus: "New Player Package: $400 + 88 Free Spins",
     license: "UK Gambling Commission",
@@ -67,6 +71,7 @@ const demoCasinos: Casino[] = [
   {
     id: "demo-5",
     name: "Casumo Casino",
+    slug: "casumo-casino",
     logo_url: "https://via.placeholder.com/150?text=Casumo",
     bonus: "Welcome Bonus: $1,200 + 200 Free Spins",
     license: "Malta Gaming Authority",
@@ -93,37 +98,7 @@ export function HomePage() {
     loadCasinos();
   }, []);
 
-  useEffect(() => {
-    filterCasinos();
-  }, [casinos, searchQuery, licenseFilter, countryFilter, ratingFilter]);
-
-  async function loadCasinos() {
-    try {
-      const supabase = createSupabaseClient();
-      const { data, error } = await supabase
-        .from("casinos")
-        .select("*")
-        .order("rating_avg", { ascending: false });
-
-      if (error) throw error;
-      
-      // Use loaded data if available, otherwise use demo data
-      if (data && data.length > 0) {
-        setCasinos(data);
-      } else {
-        // No data in database, use demo data
-        setCasinos(demoCasinos);
-      }
-    } catch (error) {
-      console.error("Error loading casinos:", error);
-      // On error, use demo data as fallback
-      setCasinos(demoCasinos);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  function filterCasinos() {
+  const filterCasinos = useCallback(() => {
     let filtered = [...casinos];
 
     // Search filter
@@ -154,6 +129,36 @@ export function HomePage() {
     }
 
     setFilteredCasinos(filtered);
+  }, [casinos, searchQuery, licenseFilter, countryFilter, ratingFilter]);
+
+  useEffect(() => {
+    filterCasinos();
+  }, [filterCasinos]);
+
+  async function loadCasinos() {
+    try {
+      const supabase = createSupabaseClient();
+      const { data, error } = await supabase
+        .from("casinos")
+        .select("*")
+        .order("rating_avg", { ascending: false });
+
+      if (error) throw error;
+      
+      // Use loaded data if available, otherwise use demo data
+      if (data && data.length > 0) {
+        setCasinos(data);
+      } else {
+        // No data in database, use demo data
+        setCasinos(demoCasinos);
+      }
+    } catch (error) {
+      console.error("Error loading casinos:", error);
+      // On error, use demo data as fallback
+      setCasinos(demoCasinos);
+    } finally {
+      setLoading(false);
+    }
   }
 
   const licenses = Array.from(new Set(casinos.map((c) => c.license))).sort();

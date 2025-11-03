@@ -1,40 +1,71 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { createSupabaseClient } from "@/lib/supabase";
 import type { Casino, Review } from "@/lib/database.types";
 import Image from "next/image";
 import { RatingStars } from "./rating-stars";
 import { ReviewForm } from "./review-form";
 import { ReviewCard } from "./review-card";
-import { formatDate, getRatingStars } from "@/lib/utils";
+import { formatDate, getRatingStars, generateSlug } from "@/lib/utils";
 import { Star, CreditCard, Shield, Globe } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 interface CasinoDetailPageProps {
-  casinoId: string;
+  casinoSlug: string;
 }
 
-export function CasinoDetailPage({ casinoId }: CasinoDetailPageProps) {
+export function CasinoDetailPage({ casinoSlug }: CasinoDetailPageProps) {
   const [casino, setCasino] = useState<Casino | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
-  useEffect(() => {
-    loadCasino();
-    loadReviews();
-  }, [casinoId]);
-
-  async function loadCasino() {
+  const loadCasino = useCallback(async () => {
     try {
       const supabase = createSupabaseClient();
-      const { data, error } = await supabase
+      
+      // Try to find by slug first
+      let { data, error } = await supabase
         .from("casinos")
         .select("*")
-        .eq("id", casinoId)
+        .eq("slug", casinoSlug)
         .single();
+
+      // If not found by slug, try by id (for backward compatibility with UUIDs)
+      if (error && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(casinoSlug)) {
+        const { data: dataById, error: errorById } = await supabase
+          .from("casinos")
+          .select("*")
+          .eq("id", casinoSlug)
+          .single();
+        
+        if (!errorById && dataById) {
+          data = dataById;
+          error = null;
+        }
+      }
+
+      // If still not found, try to find by matching generated slug from name
+      // This handles cases where slug might be null in DB but we have a generated slug
+      if (error) {
+        const { data: allCasinos, error: fetchError } = await supabase
+          .from("casinos")
+          .select("*");
+
+        if (!fetchError && allCasinos) {
+          const matchingCasino = allCasinos.find(casino => {
+            const generatedSlug = generateSlug(casino.name);
+            return generatedSlug === casinoSlug || casino.id === casinoSlug;
+          });
+
+          if (matchingCasino) {
+            data = matchingCasino;
+            error = null;
+          }
+        }
+      }
 
       if (error) throw error;
       if (!data) {
@@ -48,15 +79,17 @@ export function CasinoDetailPage({ casinoId }: CasinoDetailPageProps) {
     } finally {
       setLoading(false);
     }
-  }
+  }, [casinoSlug]);
 
-  async function loadReviews() {
+  const loadReviews = useCallback(async () => {
+    if (!casino) return;
+    
     try {
       const supabase = createSupabaseClient();
       const { data, error } = await supabase
         .from("reviews")
         .select("*")
-        .eq("casino_id", casinoId)
+        .eq("casino_id", casino.id)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -64,7 +97,17 @@ export function CasinoDetailPage({ casinoId }: CasinoDetailPageProps) {
     } catch (err: any) {
       console.error("Error loading reviews:", err);
     }
-  }
+  }, [casino]);
+
+  useEffect(() => {
+    loadCasino();
+  }, [loadCasino]);
+
+  useEffect(() => {
+    if (casino) {
+      loadReviews();
+    }
+  }, [casino, loadReviews]);
 
   async function handleReviewDeleted() {
     await loadReviews();
@@ -211,7 +254,7 @@ export function CasinoDetailPage({ casinoId }: CasinoDetailPageProps) {
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
           Leave a Review
         </h2>
-        <ReviewForm casinoId={casinoId} onSuccess={loadReviews} />
+        <ReviewForm casinoId={casino.id} onSuccess={loadReviews} />
       </div>
 
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 border border-gray-200 dark:border-gray-700">

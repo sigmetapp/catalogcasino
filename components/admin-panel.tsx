@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { createSupabaseClient } from "@/lib/supabase";
 import type { Casino, Review } from "@/lib/database.types";
+import { generateSlug } from "@/lib/utils";
 import { Plus, Edit, Trash2, Star, MessageSquare } from "lucide-react";
 
 export function AdminPanel() {
@@ -368,6 +369,7 @@ function CasinoForm({
 
       const casinoData = {
         name: formData.name,
+        slug: generateSlug(formData.name),
         logo_url: formData.logo_url,
         bonus: formData.bonus,
         license: formData.license,
@@ -377,6 +379,13 @@ function CasinoForm({
       };
 
       if (casino) {
+        // When editing, only update slug if name changed
+        if (casino.name !== formData.name) {
+          casinoData.slug = generateSlug(formData.name);
+        } else {
+          delete (casinoData as any).slug; // Keep existing slug if name unchanged
+        }
+        
         const { error } = await supabase
           .from("casinos")
           .update(casinoData)

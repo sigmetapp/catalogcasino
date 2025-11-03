@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, useMemo } from "react";
+import { createContext, useContext, useEffect, useState, useMemo, useCallback } from "react";
 import { createSupabaseClient } from "@/lib/supabase";
 import type { User } from "@supabase/supabase-js";
 
@@ -26,7 +26,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const refreshUser = async () => {
+  const refreshUser = useCallback(async () => {
     if (!supabase) return;
     try {
       const {
@@ -36,7 +36,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error("Failed to refresh user:", error);
     }
-  };
+  }, [supabase]);
 
   useEffect(() => {
     if (!supabase) {
@@ -53,7 +53,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     return () => subscription.unsubscribe();
-  }, [supabase]);
+  }, [supabase, refreshUser]);
 
   return (
     <AuthContext.Provider value={{ user, loading, refreshUser }}>

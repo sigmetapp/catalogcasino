@@ -1,6 +1,7 @@
 export interface Casino {
   id: string;
   name: string;
+  slug: string;
   logo_url: string;
   bonus: string;
   license: string;
@@ -36,7 +37,7 @@ export interface Database {
     Tables: {
       casinos: {
         Row: Casino;
-        Insert: Omit<Casino, 'id' | 'created_at' | 'updated_at' | 'rating_avg' | 'rating_count'>;
+        Insert: Omit<Casino, 'id' | 'created_at' | 'updated_at' | 'rating_avg' | 'rating_count'> | { slug?: string };
         Update: Partial<Omit<Casino, 'id' | 'created_at'>>;
       };
       reviews: {
