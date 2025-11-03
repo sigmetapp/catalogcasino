@@ -1,15 +1,22 @@
-import { createClientComponentClient, createServerComponentClient } from '@supabase/auth-helpers-nextjs';
 import { createClient } from '@supabase/supabase-js';
-import { cookies } from 'next/headers';
 
 // Client-side Supabase client
 export const createSupabaseClient = () => {
-  return createClientComponentClient();
-};
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-// Server-side Supabase client
-export const createSupabaseServerClient = () => {
-  return createServerComponentClient({ cookies });
+  // During SSR/SSG, if env vars are missing, return a placeholder client
+  // This prevents build errors during static generation
+  if (!supabaseUrl || !supabaseAnonKey) {
+    if (typeof window === 'undefined') {
+      // Server-side: return a placeholder client that won't crash
+      return createClient('https://placeholder.supabase.co', 'placeholder-key');
+    }
+    // Client-side: throw error since we need real credentials
+    throw new Error('Missing Supabase environment variables: NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY must be set');
+  }
+
+  return createClient(supabaseUrl, supabaseAnonKey);
 };
 
 // Admin client (for server-side admin operations)
