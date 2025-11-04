@@ -108,18 +108,18 @@ const demoCasinos: Casino[] = [
   },
   {
     id: "demo-6",
-    name: "Casino Proxy Portal",
-    slug: "casino-proxy-portal",
-    logo_url: "https://via.placeholder.com/150?text=Proxy",
-    bonus: "Access to restricted casino sites",
+    name: "Casino Review Portal",
+    slug: "casino-review-portal",
+    logo_url: "https://via.placeholder.com/150?text=Review",
+    bonus: "Personal reviews, pros & cons, alternatives, registration help",
     license: "N/A",
-    description: "A proxy service that helps players access casino sites that may be restricted in their region. Provides secure connections and maintains player privacy.",
+    description: "A comprehensive review site that provides personal casino reviews, lists pros and cons, suggests alternatives, helps with registration, provides promo codes, assists with withdrawals, and offers detailed reviews.",
     country: undefined,
     payment_methods: undefined,
     rating_avg: 4.2,
     rating_count: 78,
-    entry_type: "proxy",
-    external_url: "https://example.com/proxy-service",
+    entry_type: "review-site",
+    external_url: "https://example.com/review-service",
     verified: false,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
@@ -299,7 +299,7 @@ export function HomePage() {
                 <option value="casino">🎰 Casinos</option>
                 <option value="sister-site">🔗 Sister Sites</option>
                 <option value="blog">💬 Blogs</option>
-                <option value="proxy">🌐 Proxy Sites</option>
+                <option value="review-site">📝 Review Sites</option>
               </select>
             </div>
 

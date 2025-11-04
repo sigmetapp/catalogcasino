@@ -14,7 +14,7 @@ const getEntryTypeLabel = (type?: string) => {
   switch (type) {
     case 'sister-site': return 'Sister Site';
     case 'blog': return 'Blog';
-    case 'proxy': return 'Proxy Site';
+    case 'review-site': return 'Review Site';
     default: return 'Casino';
   }
 };
@@ -23,7 +23,7 @@ const getEntryTypeColor = (type?: string) => {
   switch (type) {
     case 'sister-site': return 'bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200';
     case 'blog': return 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200';
-    case 'proxy': return 'bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200';
+    case 'review-site': return 'bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200';
     default: return 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200';
   }
 };
@@ -41,12 +41,12 @@ export function CasinoCard({ casino }: CasinoCardProps) {
     new Date(casino.promo_code_expires_at) > new Date()
   );
   
-  // Use external URL for blogs/proxy sites, otherwise use internal link
-  const href = (casino.entry_type === 'blog' || casino.entry_type === 'proxy') && casino.external_url
+  // Use external URL for blogs/review sites, otherwise use internal link
+  const href = (casino.entry_type === 'blog' || casino.entry_type === 'review-site') && casino.external_url
     ? casino.external_url
     : `/casino/${slug}`;
   
-  const isExternal = (casino.entry_type === 'blog' || casino.entry_type === 'proxy') && casino.external_url;
+  const isExternal = (casino.entry_type === 'blog' || casino.entry_type === 'review-site') && casino.external_url;
 
   const CardContent = (
     <div className="p-4 sm:p-6">
@@ -63,8 +63,12 @@ export function CasinoCard({ casino }: CasinoCardProps) {
             width={80}
             height={80}
             className="rounded-lg object-contain w-16 h-16 sm:w-20 sm:h-20"
+            unoptimized={!casino.logo_url || !casino.logo_url.startsWith('/')}
             onError={(e) => {
-              (e.target as HTMLImageElement).src = "/placeholder-logo.svg";
+              const target = e.target as HTMLImageElement;
+              if (!target.src.includes("placeholder-logo.svg")) {
+                target.src = "/placeholder-logo.svg";
+              }
             }}
           />
         </div>

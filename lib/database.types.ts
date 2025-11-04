@@ -1,4 +1,4 @@
-export type EntryType = 'casino' | 'sister-site' | 'blog' | 'proxy';
+export type EntryType = 'casino' | 'sister-site' | 'blog' | 'review-site';
 
 export interface Casino {
   id: string;
