@@ -3,8 +3,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { createSupabaseClient } from "@/lib/supabase";
 import { CasinoCard } from "./casino-card";
-import type { Casino } from "@/lib/database.types";
-import { Search, Filter } from "lucide-react";
+import type { Casino, EntryType } from "@/lib/database.types";
+import { Search, Filter, Sparkles, Ticket, CheckCircle } from "lucide-react";
 
 // Demo data fallback
 const demoCasinos: Casino[] = [
@@ -20,6 +20,12 @@ const demoCasinos: Casino[] = [
     payment_methods: ["Visa", "Mastercard", "PayPal", "Skrill", "Neteller", "Bitcoin"],
     rating_avg: 4.5,
     rating_count: 234,
+    entry_type: "casino",
+    promo_code: "ROYAL500",
+    promo_code_expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days from now
+    editorial_rating: 4.7,
+    verified: true,
+    is_featured: true,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
   },
@@ -35,6 +41,10 @@ const demoCasinos: Casino[] = [
     payment_methods: ["Visa", "Mastercard", "PayPal", "Bank Transfer", "Ethereum"],
     rating_avg: 4.7,
     rating_count: 189,
+    entry_type: "casino",
+    editorial_rating: 4.8,
+    verified: true,
+    is_featured: true,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
   },
@@ -50,36 +60,67 @@ const demoCasinos: Casino[] = [
     payment_methods: ["Visa", "Mastercard", "PayPal", "Trustly", "Zimpler"],
     rating_avg: 4.6,
     rating_count: 312,
+    entry_type: "casino",
+    promo_code: "LEO1200",
+    promo_code_expires_at: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString(), // 15 days from now
+    editorial_rating: 4.6,
+    verified: true,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
   },
   {
     id: "demo-4",
-    name: "888 Casino",
-    slug: "888-casino",
-    logo_url: "https://via.placeholder.com/150?text=888+Casino",
-    bonus: "New Player Package: $400 + 88 Free Spins",
-    license: "UK Gambling Commission",
-    description: "888 Casino is one of the oldest and most respected online casinos, operating since 1997. It offers a diverse range of games including exclusive titles, live dealer games, and a comprehensive sportsbook. The platform is available in multiple languages.",
-    country: "United Kingdom",
-    payment_methods: ["Visa", "Mastercard", "PayPal", "Skrill", "Neteller", "Apple Pay"],
-    rating_avg: 4.4,
-    rating_count: 278,
+    name: "Casino Player Blog",
+    slug: "casino-player-blog",
+    logo_url: "https://via.placeholder.com/150?text=Blog",
+    bonus: "Real player experiences and bonus guides",
+    license: "N/A",
+    description: "A blog where players share their real experiences with online casinos, including detailed reviews, bonus guides, and tips for getting the most out of casino offers.",
+    country: null,
+    payment_methods: null,
+    rating_avg: 4.3,
+    rating_count: 45,
+    entry_type: "blog",
+    external_url: "https://example.com/casino-blog",
+    verified: true,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
   },
   {
     id: "demo-5",
-    name: "Casumo Casino",
-    slug: "casumo-casino",
-    logo_url: "https://via.placeholder.com/150?text=Casumo",
-    bonus: "Welcome Bonus: $1,200 + 200 Free Spins",
-    license: "Malta Gaming Authority",
-    description: "Casumo is an innovative casino platform that gamifies the online casino experience. Players earn rewards and level up while playing. The casino features a unique design, fast payments, and a vast selection of games from top providers.",
-    country: "Malta",
-    payment_methods: ["Visa", "Mastercard", "PayPal", "Skrill", "Trustly", "Bitcoin"],
-    rating_avg: 4.8,
+    name: "888 Casino Sister Site",
+    slug: "888-casino-sister",
+    logo_url: "https://via.placeholder.com/150?text=888+Sister",
+    bonus: "Exclusive Welcome Bonus: $400 + 88 Free Spins",
+    license: "UK Gambling Commission",
+    description: "Sister site of 888 Casino offering exclusive bonuses and promotions. Same trusted license and gaming experience with special offers for new players.",
+    country: "United Kingdom",
+    payment_methods: ["Visa", "Mastercard", "PayPal", "Skrill", "Neteller", "Apple Pay"],
+    rating_avg: 4.4,
     rating_count: 156,
+    entry_type: "sister-site",
+    promo_code: "SISTER888",
+    promo_code_expires_at: new Date(Date.now() + 20 * 24 * 60 * 60 * 1000).toISOString(), // 20 days from now
+    editorial_rating: 4.5,
+    verified: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: "demo-6",
+    name: "Casino Proxy Portal",
+    slug: "casino-proxy-portal",
+    logo_url: "https://via.placeholder.com/150?text=Proxy",
+    bonus: "Access to restricted casino sites",
+    license: "N/A",
+    description: "A proxy service that helps players access casino sites that may be restricted in their region. Provides secure connections and maintains player privacy.",
+    country: null,
+    payment_methods: null,
+    rating_avg: 4.2,
+    rating_count: 78,
+    entry_type: "proxy",
+    external_url: "https://example.com/proxy-service",
+    verified: false,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
   },
@@ -90,9 +131,13 @@ export function HomePage() {
   const [filteredCasinos, setFilteredCasinos] = useState<Casino[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [entryTypeFilter, setEntryTypeFilter] = useState<string>("all");
   const [licenseFilter, setLicenseFilter] = useState<string>("all");
   const [countryFilter, setCountryFilter] = useState<string>("all");
   const [ratingFilter, setRatingFilter] = useState<string>("all");
+  const [promoCodeFilter, setPromoCodeFilter] = useState<boolean>(false);
+  const [verifiedFilter, setVerifiedFilter] = useState<boolean>(false);
+  const [showFeaturedOnly, setShowFeaturedOnly] = useState<boolean>(false);
 
   useEffect(() => {
     loadCasinos();
@@ -108,8 +153,14 @@ export function HomePage() {
         (casino) =>
           casino.name.toLowerCase().includes(query) ||
           casino.bonus.toLowerCase().includes(query) ||
-          casino.description?.toLowerCase().includes(query)
+          casino.description?.toLowerCase().includes(query) ||
+          casino.promo_code?.toLowerCase().includes(query)
       );
+    }
+
+    // Entry type filter
+    if (entryTypeFilter !== "all") {
+      filtered = filtered.filter((casino) => casino.entry_type === entryTypeFilter);
     }
 
     // License filter
@@ -125,11 +176,33 @@ export function HomePage() {
     // Rating filter
     if (ratingFilter !== "all") {
       const minRating = parseFloat(ratingFilter);
-      filtered = filtered.filter((casino) => casino.rating_avg >= minRating);
+      filtered = filtered.filter((casino) => {
+        const rating = casino.editorial_rating ?? casino.rating_avg;
+        return rating >= minRating;
+      });
+    }
+
+    // Promo code filter
+    if (promoCodeFilter) {
+      filtered = filtered.filter((casino) => {
+        if (!casino.promo_code) return false;
+        // Check if promo code is not expired
+        return !casino.promo_code_expires_at || new Date(casino.promo_code_expires_at) > new Date();
+      });
+    }
+
+    // Verified filter
+    if (verifiedFilter) {
+      filtered = filtered.filter((casino) => casino.verified === true);
+    }
+
+    // Featured filter
+    if (showFeaturedOnly) {
+      filtered = filtered.filter((casino) => casino.is_featured === true);
     }
 
     setFilteredCasinos(filtered);
-  }, [casinos, searchQuery, licenseFilter, countryFilter, ratingFilter]);
+  }, [casinos, searchQuery, entryTypeFilter, licenseFilter, countryFilter, ratingFilter, promoCodeFilter, verifiedFilter, showFeaturedOnly]);
 
   useEffect(() => {
     filterCasinos();
@@ -141,6 +214,8 @@ export function HomePage() {
       const { data, error } = await supabase
         .from("casinos")
         .select("*")
+        .order("is_featured", { ascending: false })
+        .order("editorial_rating", { ascending: false, nullsLast: true })
         .order("rating_avg", { ascending: false });
 
       if (error) throw error;
@@ -161,10 +236,17 @@ export function HomePage() {
     }
   }
 
+  const entryTypes = Array.from(
+    new Set(casinos.map((c) => c.entry_type || 'casino'))
+  ).sort() as EntryType[];
   const licenses = Array.from(new Set(casinos.map((c) => c.license))).sort();
   const countries = Array.from(
     new Set(casinos.map((c) => c.country).filter(Boolean))
   ).sort();
+  
+  // Separate featured and regular entries
+  const featuredEntries = filteredCasinos.filter((c) => c.is_featured);
+  const regularEntries = filteredCasinos.filter((c) => !c.is_featured);
 
   if (loading) {
     return (
@@ -180,11 +262,13 @@ export function HomePage() {
   return (
     <div className="space-y-8">
       <div className="text-center">
-        <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
-          🎰 Casino Directory
+        <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4 flex items-center justify-center gap-3">
+          <Sparkles className="text-yellow-500" size={36} />
+          Casino Experience Hub
         </h1>
-        <p className="text-lg text-gray-600 dark:text-gray-400">
-          Discover and review the best online casinos
+        <p className="text-lg text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
+          Your comprehensive guide to online casinos, sister sites, player blogs, and exclusive promo codes. 
+          Discover verified casinos that actually pay, read real player experiences, and find unique offers.
         </p>
       </div>
 
@@ -194,14 +278,31 @@ export function HomePage() {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
             <input
               type="text"
-              placeholder="Search casinos..."
+              placeholder="Search casinos, blogs, promo codes..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Entry Type
+              </label>
+              <select
+                value={entryTypeFilter}
+                onChange={(e) => setEntryTypeFilter(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="all">All Types</option>
+                <option value="casino">🎰 Casinos</option>
+                <option value="sister-site">🔗 Sister Sites</option>
+                <option value="blog">💬 Blogs</option>
+                <option value="proxy">🌐 Proxy Sites</option>
+              </select>
+            </div>
+
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 License
@@ -255,26 +356,92 @@ export function HomePage() {
               </select>
             </div>
           </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={promoCodeFilter}
+                onChange={(e) => setPromoCodeFilter(e.target.checked)}
+                className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+              />
+              <Ticket size={18} className="text-green-600 dark:text-green-400" />
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Has Promo Code
+              </span>
+            </label>
+
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={verifiedFilter}
+                onChange={(e) => setVerifiedFilter(e.target.checked)}
+                className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+              />
+              <CheckCircle size={18} className="text-green-600 dark:text-green-400" />
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Verified Only
+              </span>
+            </label>
+
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={showFeaturedOnly}
+                onChange={(e) => setShowFeaturedOnly(e.target.checked)}
+                className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+              />
+              <Sparkles size={18} className="text-yellow-600 dark:text-yellow-400" />
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Featured Only
+              </span>
+            </label>
+          </div>
         </div>
       </div>
 
       <div>
         <p className="text-gray-600 dark:text-gray-400 mb-4">
-          Showing {filteredCasinos.length} casino{filteredCasinos.length !== 1 ? "s" : ""}
+          Showing {filteredCasinos.length} entr{filteredCasinos.length !== 1 ? "ies" : "y"}
         </p>
 
         {filteredCasinos.length === 0 ? (
           <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
             <p className="text-gray-600 dark:text-gray-400 text-lg">
-              No casinos found matching your criteria.
+              No entries found matching your criteria.
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredCasinos.map((casino) => (
-              <CasinoCard key={casino.id} casino={casino} />
-            ))}
-          </div>
+          <>
+            {featuredEntries.length > 0 && (
+              <div className="mb-8">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                  <Sparkles className="text-yellow-500" size={24} />
+                  Featured
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {featuredEntries.map((casino) => (
+                    <CasinoCard key={casino.id} casino={casino} />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {regularEntries.length > 0 && (
+              <div>
+                {featuredEntries.length > 0 && (
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+                    All Entries
+                  </h2>
+                )}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {regularEntries.map((casino) => (
+                    <CasinoCard key={casino.id} casino={casino} />
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
