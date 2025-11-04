@@ -221,6 +221,8 @@ export function CasinoDetailPage({ casinoSlug }: CasinoDetailPageProps) {
   // Only blogs use external links if external_url is provided
   const isExternal = casino.entry_type === 'blog' && casino.external_url;
   const isCasino = casino.entry_type === 'casino' || !casino.entry_type;
+  // Allow reviews for casinos, sister sites, and review sites
+  const allowReviews = isCasino || casino.entry_type === 'sister-site' || casino.entry_type === 'review-site';
 
   const copyPromoCode = () => {
     if (casino.promo_code) {
@@ -365,7 +367,13 @@ export function CasinoDetailPage({ casinoSlug }: CasinoDetailPageProps) {
                           Sister Site
                         </th>
                         <th className="px-3 sm:px-4 py-2 sm:py-3 text-left text-xs sm:text-sm font-semibold text-gray-900 dark:text-white">
+                          GEO
+                        </th>
+                        <th className="px-3 sm:px-4 py-2 sm:py-3 text-left text-xs sm:text-sm font-semibold text-gray-900 dark:text-white">
                           Promo Code
+                        </th>
+                        <th className="px-3 sm:px-4 py-2 sm:py-3 text-center text-xs sm:text-sm font-semibold text-gray-900 dark:text-white">
+                          Action
                         </th>
                       </tr>
                     </thead>
@@ -390,6 +398,11 @@ export function CasinoDetailPage({ casinoSlug }: CasinoDetailPageProps) {
                               </a>
                             </td>
                             <td className="px-3 sm:px-4 py-2 sm:py-3">
+                              <span className="text-xs sm:text-sm text-gray-700 dark:text-gray-300">
+                                {site.country || 'N/A'}
+                              </span>
+                            </td>
+                            <td className="px-3 sm:px-4 py-2 sm:py-3">
                               {hasValidPromo ? (
                                 <code className="px-2 sm:px-3 py-1 bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 rounded font-mono text-xs sm:text-sm font-semibold">
                                   {site.promo_code}
@@ -399,6 +412,15 @@ export function CasinoDetailPage({ casinoSlug }: CasinoDetailPageProps) {
                                   No promo code
                                 </span>
                               )}
+                            </td>
+                            <td className="px-3 sm:px-4 py-2 sm:py-3">
+                              <a
+                                href={`/casino/${siteSlug}`}
+                                className="inline-flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors text-xs sm:text-sm font-medium"
+                              >
+                                Visit Site
+                                <ExternalLink size={14} className="sm:w-4 sm:h-4" />
+                              </a>
                             </td>
                           </tr>
                         );
@@ -475,6 +497,32 @@ export function CasinoDetailPage({ casinoSlug }: CasinoDetailPageProps) {
               <div className="mb-4 sm:mb-6">
                 <h3 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white mb-2">Description</h3>
                 <p className="text-sm sm:text-base text-gray-700 dark:text-gray-200 leading-relaxed">{casino.description}</p>
+              </div>
+            )}
+
+            {/* GEO for Review Sites */}
+            {casino.entry_type === 'review-site' && casino.country && (
+              <div className="mb-4 sm:mb-6">
+                <div className="flex items-center gap-2">
+                  <Globe size={18} className="sm:w-5 sm:h-5 text-orange-600 dark:text-orange-400" />
+                  <div>
+                    <p className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-white">GEO</p>
+                    <p className="text-sm sm:text-base text-gray-700 dark:text-gray-200">{casino.country}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* GEO for Sister Sites */}
+            {casino.entry_type === 'sister-site' && casino.country && (
+              <div className="mb-4 sm:mb-6">
+                <div className="flex items-center gap-2">
+                  <Globe size={18} className="sm:w-5 sm:h-5 text-purple-600 dark:text-purple-400" />
+                  <div>
+                    <p className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-white">GEO</p>
+                    <p className="text-sm sm:text-base text-gray-700 dark:text-gray-200">{casino.country}</p>
+                  </div>
+                </div>
               </div>
             )}
 
@@ -647,7 +695,7 @@ export function CasinoDetailPage({ casinoSlug }: CasinoDetailPageProps) {
         </div>
       )}
 
-      {isCasino && (
+      {allowReviews && (
         <div className="bg-white dark:bg-gray-900 rounded-lg shadow-md p-4 sm:p-6 border border-gray-200 dark:border-gray-800">
           <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-4 sm:mb-6">
             Leave a Review
@@ -656,7 +704,7 @@ export function CasinoDetailPage({ casinoSlug }: CasinoDetailPageProps) {
         </div>
       )}
 
-      {isCasino && (
+      {allowReviews && (
         <div className="bg-white dark:bg-gray-900 rounded-lg shadow-md p-4 sm:p-6 border border-gray-200 dark:border-gray-800">
           <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-4 sm:mb-6">
             Reviews ({reviews.length})
