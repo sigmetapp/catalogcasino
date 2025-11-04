@@ -20,6 +20,8 @@ export interface Casino {
   verified?: boolean;
   sister_site_of?: string | null;
   is_featured?: boolean;
+  title?: string | null;
+  meta_description?: string | null;
   created_at: string;
   updated_at: string;
 }

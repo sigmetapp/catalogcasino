@@ -2,9 +2,12 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Star, CheckCircle, ExternalLink, Ticket, Sparkles } from "lucide-react";
+import { Star, CheckCircle, ExternalLink, Ticket, Sparkles, Edit } from "lucide-react";
 import type { Casino } from "@/lib/database.types";
 import { getRatingStars, generateSlug } from "@/lib/utils";
+import { useAuth } from "./auth-provider";
+import { useState, useEffect } from "react";
+import { createSupabaseClient } from "@/lib/supabase";
 
 interface CasinoCardProps {
   casino: Casino;
@@ -29,6 +32,8 @@ const getEntryTypeColor = (type?: string) => {
 };
 
 export function CasinoCard({ casino }: CasinoCardProps) {
+  const { user } = useAuth();
+  const [isAdmin, setIsAdmin] = useState(false);
   const stars = getRatingStars(casino.rating_avg);
   const editorialStars = casino.editorial_rating ? getRatingStars(casino.editorial_rating) : null;
   
@@ -43,9 +48,32 @@ export function CasinoCard({ casino }: CasinoCardProps) {
   
   // All cards use internal links to catalog pages
   const href = `/casino/${slug}`;
+  const editHref = `/admin/edit/${slug}`;
   
   // Only blogs use external links if external_url is provided
   const isExternal = casino.entry_type === 'blog' && casino.external_url;
+
+  useEffect(() => {
+    async function checkAdmin() {
+      if (user) {
+        try {
+          const supabase = createSupabaseClient();
+          const { data } = await supabase
+            .from("users")
+            .select("is_admin")
+            .eq("id", user.id)
+            .single();
+          setIsAdmin(data?.is_admin ?? false);
+        } catch (error) {
+          console.error("Failed to check admin status:", error);
+          setIsAdmin(false);
+        }
+      } else {
+        setIsAdmin(false);
+      }
+    }
+    checkAdmin();
+  }, [user]);
 
   const CardContent = (
     <div className="p-4 sm:p-6">
@@ -155,10 +183,20 @@ export function CasinoCard({ casino }: CasinoCardProps) {
         </div>
       </div>
       
-      <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-gray-200 dark:border-gray-600">
+      <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-gray-200 dark:border-gray-600 flex items-center justify-between gap-2">
         <span className="text-xs sm:text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1">
           {casino.entry_type === 'review-site' ? 'View Details' : casino.entry_type === 'sister-site' ? 'View Details' : isExternal ? 'Visit Site' : 'Read Reviews'} →
         </span>
+        {isAdmin && (
+          <Link
+            href={editHref}
+            onClick={(e) => e.stopPropagation()}
+            className="inline-flex items-center gap-1 px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-xs sm:text-sm font-medium"
+          >
+            <Edit size={12} className="sm:w-4 sm:h-4" />
+            Edit
+          </Link>
+        )}
       </div>
     </div>
   );

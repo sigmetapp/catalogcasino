@@ -8,9 +8,11 @@ import { RatingStars } from "./rating-stars";
 import { ReviewForm } from "./review-form";
 import { ReviewCard } from "./review-card";
 import { formatDate, getRatingStars, generateSlug } from "@/lib/utils";
-import { Star, CreditCard, Shield, Globe, CheckCircle, ExternalLink, Ticket, Sparkles, Copy, Link2, FileText, ListChecks, HelpCircle, Gift, ArrowRightLeft, Users } from "lucide-react";
+import { Star, CreditCard, Shield, Globe, CheckCircle, ExternalLink, Ticket, Sparkles, Copy, Link2, FileText, ListChecks, HelpCircle, Gift, ArrowRightLeft, Users, Edit } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { demoCasinos } from "@/lib/demo-data";
+import { useAuth } from "./auth-provider";
+import Link from "next/link";
 
 const getEntryTypeLabel = (type?: string) => {
   switch (type) {
@@ -35,11 +37,13 @@ interface CasinoDetailPageProps {
 }
 
 export function CasinoDetailPage({ casinoSlug }: CasinoDetailPageProps) {
+  const { user } = useAuth();
   const [casino, setCasino] = useState<Casino | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [sisterSites, setSisterSites] = useState<Casino[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const router = useRouter();
 
   const loadCasino = useCallback(async () => {
@@ -136,6 +140,28 @@ export function CasinoDetailPage({ casinoSlug }: CasinoDetailPageProps) {
     loadCasino();
   }, [loadCasino]);
 
+  useEffect(() => {
+    async function checkAdmin() {
+      if (user) {
+        try {
+          const supabase = createSupabaseClient();
+          const { data } = await supabase
+            .from("users")
+            .select("is_admin")
+            .eq("id", user.id)
+            .single();
+          setIsAdmin(data?.is_admin ?? false);
+        } catch (error) {
+          console.error("Failed to check admin status:", error);
+          setIsAdmin(false);
+        }
+      } else {
+        setIsAdmin(false);
+      }
+    }
+    checkAdmin();
+  }, [user]);
+
   const loadSisterSites = useCallback(async () => {
     try {
       const supabase = createSupabaseClient();
@@ -231,14 +257,30 @@ export function CasinoDetailPage({ casinoSlug }: CasinoDetailPageProps) {
     }
   };
 
+  if (!casino) return null;
+
+  const slug = casino.slug || generateSlug(casino.name) || casino.id;
+  const editHref = `/admin/edit/${slug}`;
+
   return (
     <div className="space-y-6 sm:space-y-8">
-      <button
-        onClick={() => router.back()}
-        className="text-sm sm:text-base text-blue-600 dark:text-blue-400 hover:underline mb-2 sm:mb-4"
-      >
-        ← Back
-      </button>
+      <div className="flex items-center justify-between gap-4">
+        <button
+          onClick={() => router.back()}
+          className="text-sm sm:text-base text-blue-600 dark:text-blue-400 hover:underline mb-2 sm:mb-4"
+        >
+          ← Back
+        </button>
+        {isAdmin && (
+          <Link
+            href={editHref}
+            className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm sm:text-base font-medium"
+          >
+            <Edit size={16} className="sm:w-5 sm:h-5" />
+            Edit
+          </Link>
+        )}
+      </div>
 
       <div className="bg-white dark:bg-gray-900 rounded-lg shadow-md p-4 sm:p-6 md:p-8 border border-gray-200 dark:border-gray-800">
         <div className="flex flex-col md:flex-row gap-4 sm:gap-6 md:gap-8">
