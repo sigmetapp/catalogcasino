@@ -139,7 +139,7 @@ export function CasinoDetailPage({ casinoSlug }: CasinoDetailPageProps) {
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
           <div className="animate-spin rounded-full h-10 w-10 sm:h-12 sm:w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300">Loading casino...</p>
+          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-200">Loading casino...</p>
         </div>
       </div>
     );
@@ -189,7 +189,7 @@ export function CasinoDetailPage({ casinoSlug }: CasinoDetailPageProps) {
         ← Back
       </button>
 
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 sm:p-6 md:p-8 border border-gray-200 dark:border-gray-700">
+      <div className="bg-white dark:bg-gray-900 rounded-lg shadow-md p-4 sm:p-6 md:p-8 border border-gray-200 dark:border-gray-800">
         <div className="flex flex-col md:flex-row gap-4 sm:gap-6 md:gap-8">
           <div className="flex-shrink-0 relative mx-auto md:mx-0">
             {casino.is_featured && (
@@ -220,7 +220,7 @@ export function CasinoDetailPage({ casinoSlug }: CasinoDetailPageProps) {
                 </span>
               )}
               {isExternal && (
-                <ExternalLink size={18} className="sm:w-5 sm:h-5 text-gray-400 dark:text-gray-500 flex-shrink-0" />
+                <ExternalLink size={18} className="sm:w-5 sm:h-5 text-gray-400 dark:text-gray-400 flex-shrink-0" />
               )}
             </div>
 
@@ -255,11 +255,11 @@ export function CasinoDetailPage({ casinoSlug }: CasinoDetailPageProps) {
                         ? "fill-yellow-400 text-yellow-400"
                         : star === 0.5
                         ? "fill-yellow-400/50 text-yellow-400"
-                        : "text-gray-300 dark:text-gray-600"
+                        : "text-gray-300 dark:text-gray-500"
                     }`}
                   />
                 ))}
-                <span className="ml-1 sm:ml-2 text-sm sm:text-base md:text-lg text-gray-600 dark:text-gray-300">
+                <span className="ml-1 sm:ml-2 text-sm sm:text-base md:text-lg text-gray-600 dark:text-gray-200">
                   User Rating: {casino.rating_avg.toFixed(1)}/5.0 ({casino.rating_count} reviews)
                 </span>
               </div>
@@ -287,7 +287,7 @@ export function CasinoDetailPage({ casinoSlug }: CasinoDetailPageProps) {
                         </button>
                       </div>
                       {casino.promo_code_expires_at && (
-                        <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                        <p className="text-xs text-gray-600 dark:text-gray-300 mt-1">
                           Expires: {formatDate(casino.promo_code_expires_at)}
                         </p>
                       )}
@@ -370,7 +370,7 @@ export function CasinoDetailPage({ casinoSlug }: CasinoDetailPageProps) {
       </div>
 
       {isCasino && (
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 sm:p-6 border border-gray-200 dark:border-gray-700">
+        <div className="bg-white dark:bg-gray-900 rounded-lg shadow-md p-4 sm:p-6 border border-gray-200 dark:border-gray-800">
           <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-4 sm:mb-6">
             Leave a Review
           </h2>
@@ -379,13 +379,13 @@ export function CasinoDetailPage({ casinoSlug }: CasinoDetailPageProps) {
       )}
 
       {isCasino && (
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 sm:p-6 border border-gray-200 dark:border-gray-700">
+        <div className="bg-white dark:bg-gray-900 rounded-lg shadow-md p-4 sm:p-6 border border-gray-200 dark:border-gray-800">
           <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-4 sm:mb-6">
             Reviews ({reviews.length})
           </h2>
 
           {reviews.length === 0 ? (
-            <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300 text-center py-6 sm:py-8">
+            <p className="text-sm sm:text-base text-gray-600 dark:text-gray-200 text-center py-6 sm:py-8">
               No reviews yet. Be the first to review this {getEntryTypeLabel(casino.entry_type).toLowerCase()}!
             </p>
           ) : (

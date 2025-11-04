@@ -154,7 +154,7 @@ export function AdminPanel() {
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
           <div className="animate-spin rounded-full h-10 w-10 sm:h-12 sm:w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300">Loading admin panel...</p>
+          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-200">Loading admin panel...</p>
         </div>
       </div>
     );
@@ -238,7 +238,7 @@ export function AdminPanel() {
             {casinos.map((casino) => (
               <div
                 key={casino.id}
-                className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 sm:p-6 border border-gray-200 dark:border-gray-700"
+                className="bg-white dark:bg-gray-900 rounded-lg shadow-md p-4 sm:p-6 border border-gray-200 dark:border-gray-800"
               >
                 <div className="flex items-start justify-between mb-3 sm:mb-4 gap-2">
                   <h3 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white flex-1 min-w-0 break-words">
@@ -263,7 +263,7 @@ export function AdminPanel() {
                   </div>
                 </div>
 
-                <div className="space-y-2 text-xs sm:text-sm text-gray-600 dark:text-gray-300">
+                <div className="space-y-2 text-xs sm:text-sm text-gray-600 dark:text-gray-200">
                   <p>
                     <span className="font-semibold">License:</span> {casino.license}
                   </p>
@@ -288,7 +288,7 @@ export function AdminPanel() {
           {reviews.map((review) => (
             <div
               key={review.id}
-              className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 sm:p-6 border border-gray-200 dark:border-gray-700"
+              className="bg-white dark:bg-gray-900 rounded-lg shadow-md p-4 sm:p-6 border border-gray-200 dark:border-gray-800"
             >
               <div className="flex items-start justify-between gap-2 sm:gap-4 mb-3 sm:mb-4">
                 <div className="flex-1 min-w-0">
@@ -309,14 +309,14 @@ export function AdminPanel() {
                         />
                       ))}
                     </div>
-                    <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                    <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-300 whitespace-nowrap">
                       {new Date(review.created_at).toLocaleDateString()}
                     </span>
                   </div>
                   <p className="text-sm sm:text-base text-gray-700 dark:text-gray-200 mb-2 break-words">
                     {review.comment}
                   </p>
-                  <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 break-all">
+                  <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-300 break-all">
                     Casino ID: {review.casino_id}
                   </p>
                 </div>
@@ -408,7 +408,7 @@ function CasinoForm({
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 sm:p-6 border border-gray-200 dark:border-gray-700">
+    <div className="bg-white dark:bg-gray-900 rounded-lg shadow-md p-4 sm:p-6 border border-gray-200 dark:border-gray-800">
       <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-4 sm:mb-6">
         {casino ? "Edit Casino" : "Add Casino"}
       </h2>

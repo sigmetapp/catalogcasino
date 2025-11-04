@@ -4,6 +4,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AuthProvider } from "@/components/auth-provider";
 import { Header } from "@/components/header";
+import { Footer } from "@/components/footer";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -22,11 +23,12 @@ export default function RootLayout({
       <body className={inter.className}>
         <ThemeProvider>
           <AuthProvider>
-            <div className="min-h-screen bg-background">
+            <div className="min-h-screen bg-background flex flex-col">
               <Header />
-              <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 md:py-8">
+              <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 md:py-8 flex-1">
                 {children}
               </main>
+              <Footer />
             </div>
           </AuthProvider>
         </ThemeProvider>

@@ -253,7 +253,7 @@ export function HomePage() {
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
           <div className="animate-spin rounded-full h-10 w-10 sm:h-12 sm:w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300">Loading casinos...</p>
+          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-200">Loading casinos...</p>
         </div>
       </div>
     );
@@ -266,16 +266,16 @@ export function HomePage() {
           <Sparkles className="text-yellow-500 flex-shrink-0" size={28} style={{ width: '28px', height: '28px' }} />
           <span className="break-words">Casino Experience Hub</span>
         </h1>
-        <p className="text-sm sm:text-base md:text-lg text-gray-600 dark:text-gray-300 max-w-3xl mx-auto px-2">
+        <p className="text-sm sm:text-base md:text-lg text-gray-600 dark:text-gray-200 max-w-3xl mx-auto px-2">
           Your comprehensive guide to online casinos, sister sites, player blogs, and exclusive promo codes. 
           Discover verified casinos that actually pay, read real player experiences, and find unique offers.
         </p>
       </div>
 
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 sm:p-6 border border-gray-200 dark:border-gray-700">
+      <div className="bg-white dark:bg-gray-900 rounded-lg shadow-md p-4 sm:p-6 border border-gray-200 dark:border-gray-800">
         <div className="space-y-4">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" size={20} />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-400" size={20} />
             <input
               type="text"
               placeholder="Search casinos, blogs, promo codes..."
@@ -401,13 +401,13 @@ export function HomePage() {
       </div>
 
       <div>
-        <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300 mb-4 px-2">
+        <p className="text-sm sm:text-base text-gray-600 dark:text-gray-200 mb-4 px-2">
           Showing {filteredCasinos.length} entr{filteredCasinos.length !== 1 ? "ies" : "y"}
         </p>
 
         {filteredCasinos.length === 0 ? (
-          <div className="text-center py-8 sm:py-12 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 px-4">
-            <p className="text-sm sm:text-base md:text-lg text-gray-600 dark:text-gray-300">
+          <div className="text-center py-8 sm:py-12 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 px-4">
+            <p className="text-sm sm:text-base md:text-lg text-gray-600 dark:text-gray-200">
               No entries found matching your criteria.
             </p>
           </div>

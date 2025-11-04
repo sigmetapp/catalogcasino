@@ -36,7 +36,7 @@ export function ReviewCard({ review, onDelete, showDelete = false }: ReviewCardP
   const canDelete = showDelete && (isAdmin || user?.id === review.user_id);
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg p-3 sm:p-4 border border-gray-200 dark:border-gray-700">
+    <div className="bg-white dark:bg-gray-900 rounded-lg p-3 sm:p-4 border border-gray-200 dark:border-gray-800">
       <div className="flex items-start justify-between gap-2 sm:gap-4 mb-2">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 sm:gap-3 mb-2 flex-wrap">
@@ -44,7 +44,7 @@ export function ReviewCard({ review, onDelete, showDelete = false }: ReviewCardP
               {review.username}
             </h4>
             <RatingStars rating={review.rating} size={14} />
-            <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">
+            <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-300 whitespace-nowrap">
               {formatDate(review.created_at)}
             </span>
           </div>
