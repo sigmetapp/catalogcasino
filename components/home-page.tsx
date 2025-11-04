@@ -215,7 +215,7 @@ export function HomePage() {
         .from("casinos")
         .select("*")
         .order("is_featured", { ascending: false })
-        .order("editorial_rating", { ascending: false, nullsLast: true })
+        .order("editorial_rating", { ascending: false, nullsFirst: false })
         .order("rating_avg", { ascending: false });
 
       if (error) throw error;
