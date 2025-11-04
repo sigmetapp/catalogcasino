@@ -75,7 +75,9 @@ export function CasinoCard({ casino }: CasinoCardProps) {
               {casino.name}
             </h3>
             {casino.verified && (
-              <CheckCircle size={18} className="text-green-500 flex-shrink-0" title="Verified" />
+              <span title="Verified">
+                <CheckCircle size={18} className="text-green-500 flex-shrink-0" aria-label="Verified" />
+              </span>
             )}
             {isExternal && (
               <ExternalLink size={16} className="text-gray-400 flex-shrink-0" />

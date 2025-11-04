@@ -215,7 +215,9 @@ export function CasinoDetailPage({ casinoSlug }: CasinoDetailPageProps) {
                 {casino.name}
               </h1>
               {casino.verified && (
-                <CheckCircle size={24} className="text-green-500 flex-shrink-0" title="Verified" />
+                <span title="Verified">
+                  <CheckCircle size={24} className="text-green-500 flex-shrink-0" aria-label="Verified" />
+                </span>
               )}
               {isExternal && (
                 <ExternalLink size={20} className="text-gray-400 flex-shrink-0" />
@@ -278,6 +280,7 @@ export function CasinoDetailPage({ casinoSlug }: CasinoDetailPageProps) {
                         <button
                           onClick={copyPromoCode}
                           className="p-2 hover:bg-green-100 dark:hover:bg-green-900 rounded transition-colors"
+                          aria-label="Copy promo code"
                           title="Copy promo code"
                         >
                           <Copy size={18} className="text-green-600 dark:text-green-400" />
