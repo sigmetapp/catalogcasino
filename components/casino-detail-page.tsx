@@ -8,8 +8,9 @@ import { RatingStars } from "./rating-stars";
 import { ReviewForm } from "./review-form";
 import { ReviewCard } from "./review-card";
 import { formatDate, getRatingStars, generateSlug } from "@/lib/utils";
-import { Star, CreditCard, Shield, Globe, CheckCircle, ExternalLink, Ticket, Sparkles, Copy } from "lucide-react";
+import { Star, CreditCard, Shield, Globe, CheckCircle, ExternalLink, Ticket, Sparkles, Copy, Link2, FileText, ListChecks, HelpCircle, Gift, ArrowRightLeft, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { demoCasinos } from "@/lib/demo-data";
 
 const getEntryTypeLabel = (type?: string) => {
   switch (type) {
@@ -85,11 +86,24 @@ export function CasinoDetailPage({ casinoSlug }: CasinoDetailPageProps) {
         }
       }
 
-      if (error) throw error;
-      if (!data) {
+      // If still not found in database, try demo data
+      if (error || !data) {
+        const demoCasino = demoCasinos.find(casino => 
+          casino.slug === casinoSlug || 
+          generateSlug(casino.name) === casinoSlug ||
+          casino.id === casinoSlug
+        );
+
+        if (demoCasino) {
+          setCasino(demoCasino);
+          return;
+        }
+
+        // If not found even in demo data, show error
         setError("Casino not found");
         return;
       }
+
       setCasino(data);
     } catch (err: any) {
       console.error("Error loading casino:", err);
@@ -373,6 +387,157 @@ export function CasinoDetailPage({ casinoSlug }: CasinoDetailPageProps) {
           </div>
         </div>
       </div>
+
+      {/* Special template for Sister Sites */}
+      {casino.entry_type === 'sister-site' && (
+        <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg shadow-md p-4 sm:p-6 border border-purple-200 dark:border-purple-800">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-4 sm:mb-6 flex items-center gap-2">
+            <Link2 className="text-purple-600 dark:text-purple-400" size={24} />
+            Sister Site Information
+          </h2>
+          
+          <div className="space-y-4">
+            {casino.sister_site_of && (
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-purple-200 dark:border-purple-700">
+                <h3 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
+                  <Link2 size={18} className="text-purple-600 dark:text-purple-400" />
+                  Parent Casino
+                </h3>
+                <p className="text-sm sm:text-base text-gray-700 dark:text-gray-200">
+                  This is a sister site that shares the same license and gaming platform as the parent casino.
+                </p>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-purple-200 dark:border-purple-700">
+                <h3 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
+                  <Gift size={18} className="text-purple-600 dark:text-purple-400" />
+                  Exclusive Bonuses
+                </h3>
+                <p className="text-sm sm:text-base text-gray-700 dark:text-gray-200">
+                  Sister sites often offer exclusive bonuses and promotions that differ from the parent casino, providing unique opportunities for players.
+                </p>
+              </div>
+
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-purple-200 dark:border-purple-700">
+                <h3 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
+                  <Shield size={18} className="text-purple-600 dark:text-purple-400" />
+                  Same Trust & License
+                </h3>
+                <p className="text-sm sm:text-base text-gray-700 dark:text-gray-200">
+                  Sister sites share the same trusted license and regulatory oversight as their parent casino, ensuring the same level of security and fairness.
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-purple-200 dark:border-purple-700">
+              <h3 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
+                <Users size={18} className="text-purple-600 dark:text-purple-400" />
+                Benefits of Sister Sites
+              </h3>
+              <ul className="list-disc list-inside space-y-2 text-sm sm:text-base text-gray-700 dark:text-gray-200">
+                <li>Exclusive promotional offers and bonuses</li>
+                <li>Same trusted gaming platform and license</li>
+                <li>Shared account management (in some cases)</li>
+                <li>Access to the same game library</li>
+                <li>Additional welcome bonuses for new players</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Special template for Review Sites */}
+      {casino.entry_type === 'review-site' && (
+        <div className="bg-orange-50 dark:bg-orange-900/20 rounded-lg shadow-md p-4 sm:p-6 border border-orange-200 dark:border-orange-800">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-4 sm:mb-6 flex items-center gap-2">
+            <FileText className="text-orange-600 dark:text-orange-400" size={24} />
+            Review Site Services
+          </h2>
+          
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-orange-200 dark:border-orange-700">
+                <h3 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
+                  <FileText size={18} className="text-orange-600 dark:text-orange-400" />
+                  Personal Reviews
+                </h3>
+                <p className="text-sm sm:text-base text-gray-700 dark:text-gray-200">
+                  Detailed personal reviews of casinos with comprehensive analysis and real player experiences.
+                </p>
+              </div>
+
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-orange-200 dark:border-orange-700">
+                <h3 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
+                  <ListChecks size={18} className="text-orange-600 dark:text-orange-400" />
+                  Pros & Cons
+                </h3>
+                <p className="text-sm sm:text-base text-gray-700 dark:text-gray-200">
+                  Clear breakdown of advantages and disadvantages for each casino to help you make informed decisions.
+                </p>
+              </div>
+
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-orange-200 dark:border-orange-700">
+                <h3 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
+                  <ArrowRightLeft size={18} className="text-orange-600 dark:text-orange-400" />
+                  Alternatives
+                </h3>
+                <p className="text-sm sm:text-base text-gray-700 dark:text-gray-200">
+                  Recommendations for alternative casinos that might better suit your preferences and playing style.
+                </p>
+              </div>
+
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-orange-200 dark:border-orange-700">
+                <h3 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
+                  <HelpCircle size={18} className="text-orange-600 dark:text-orange-400" />
+                  Registration Help
+                </h3>
+                <p className="text-sm sm:text-base text-gray-700 dark:text-gray-200">
+                  Step-by-step guides and assistance for casino registration, account setup, and verification processes.
+                </p>
+              </div>
+
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-orange-200 dark:border-orange-700">
+                <h3 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
+                  <Ticket size={18} className="text-orange-600 dark:text-orange-400" />
+                  Promo Codes
+                </h3>
+                <p className="text-sm sm:text-base text-gray-700 dark:text-gray-200">
+                  Exclusive promo codes database with active codes and special offers for various casinos.
+                </p>
+              </div>
+
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-orange-200 dark:border-orange-700">
+                <h3 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
+                  <Gift size={18} className="text-orange-600 dark:text-orange-400" />
+                  Withdrawal Help
+                </h3>
+                <p className="text-sm sm:text-base text-gray-700 dark:text-gray-200">
+                  Comprehensive guides and support for withdrawal processes, including methods, limits, and troubleshooting.
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-orange-200 dark:border-orange-700">
+              <h3 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
+                <Star size={18} className="text-orange-600 dark:text-orange-400" />
+                What Review Sites Provide
+              </h3>
+              <ul className="list-disc list-inside space-y-2 text-sm sm:text-base text-gray-700 dark:text-gray-200">
+                <li>In-depth casino reviews with personal experiences</li>
+                <li>Detailed pros and cons for each casino</li>
+                <li>Alternative casino recommendations</li>
+                <li>Registration and account setup assistance</li>
+                <li>Exclusive promo codes and bonus offers</li>
+                <li>Withdrawal guides and support</li>
+                <li>Comparison tools and features</li>
+                <li>Expert analysis and recommendations</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      )}
 
       {isCasino && (
         <div className="bg-white dark:bg-gray-900 rounded-lg shadow-md p-4 sm:p-6 border border-gray-200 dark:border-gray-800">
