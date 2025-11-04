@@ -152,7 +152,7 @@ export function CasinoCard({ casino }: CasinoCardProps) {
         </div>
       </div>
       
-      <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-gray-200 dark:border-gray-800">
+      <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-gray-200 dark:border-gray-600">
         <span className="text-xs sm:text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1">
           {isExternal ? 'Visit Site' : 'Read Reviews'} →
         </span>
@@ -166,7 +166,7 @@ export function CasinoCard({ casino }: CasinoCardProps) {
         href={href}
         target="_blank"
         rel="noopener noreferrer"
-        className="block bg-white dark:bg-gray-900 rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden border border-gray-200 dark:border-gray-800"
+        className="block bg-white dark:bg-gray-700 rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden border border-gray-200 dark:border-gray-600"
       >
         {CardContent}
       </a>
@@ -176,7 +176,7 @@ export function CasinoCard({ casino }: CasinoCardProps) {
   return (
     <Link
       href={href}
-      className="block bg-white dark:bg-gray-900 rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden border border-gray-200 dark:border-gray-800"
+      className="block bg-white dark:bg-gray-700 rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden border border-gray-200 dark:border-gray-600"
     >
       {CardContent}
     </Link>

@@ -266,7 +266,7 @@ export function HomePage() {
           <Sparkles className="text-yellow-500 flex-shrink-0" size={28} style={{ width: '28px', height: '28px' }} />
           <span className="break-words">Casino Experience Hub</span>
         </h1>
-        <p className="text-sm sm:text-base md:text-lg text-gray-600 dark:text-gray-200 max-w-3xl mx-auto px-2">
+        <p className="text-sm sm:text-base md:text-lg text-gray-600 dark:text-white max-w-3xl mx-auto px-2">
           Your comprehensive guide to online casinos, sister sites, player blogs, and exclusive promo codes. 
           Discover verified casinos that actually pay, read real player experiences, and find unique offers.
         </p>
@@ -401,7 +401,7 @@ export function HomePage() {
       </div>
 
       <div>
-        <p className="text-sm sm:text-base text-gray-600 dark:text-gray-200 mb-4 px-2">
+        <p className="text-sm sm:text-base text-gray-600 dark:text-white mb-4 px-2">
           Showing {filteredCasinos.length} entr{filteredCasinos.length !== 1 ? "ies" : "y"}
         </p>
 
