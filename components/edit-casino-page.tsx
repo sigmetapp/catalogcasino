@@ -79,7 +79,7 @@ export function EditCasinoPage({ casinoSlug }: EditCasinoPageProps) {
       const supabase = createSupabaseClient();
       const { data, error } = await supabase
         .from("casinos")
-        .select("id, name, slug")
+        .select("*")
         .eq("entry_type", "casino")
         .order("name");
 
@@ -87,7 +87,8 @@ export function EditCasinoPage({ casinoSlug }: EditCasinoPageProps) {
       
       // Combine with demo data
       const demoCasinosList = demoCasinos.filter(c => c.entry_type === "casino");
-      setAllCasinos([...(data || []), ...demoCasinosList]);
+      const allCasinosData: Casino[] = [...(data || []), ...demoCasinosList];
+      setAllCasinos(allCasinosData);
     } catch (error) {
       console.error("Error loading casinos:", error);
       const demoCasinosList = demoCasinos.filter(c => c.entry_type === "casino");
