@@ -170,7 +170,8 @@ export function CasinoDetailPage({ casinoSlug }: CasinoDetailPageProps) {
     new Date(casino.promo_code_expires_at) > new Date()
   );
   
-  const isExternal = (casino.entry_type === 'blog' || casino.entry_type === 'review-site') && casino.external_url;
+  // Only blogs use external links if external_url is provided
+  const isExternal = casino.entry_type === 'blog' && casino.external_url;
   const isCasino = casino.entry_type === 'casino' || !casino.entry_type;
 
   const copyPromoCode = () => {
@@ -223,7 +224,7 @@ export function CasinoDetailPage({ casinoSlug }: CasinoDetailPageProps) {
                   <CheckCircle size={20} className="sm:w-6 sm:h-6 text-green-500" aria-label="Verified" />
                 </span>
               )}
-              {isExternal && (
+              {isExternal && casino.entry_type === 'blog' && (
                 <ExternalLink size={18} className="sm:w-5 sm:h-5 text-gray-400 dark:text-gray-400 flex-shrink-0" />
               )}
             </div>
@@ -301,7 +302,7 @@ export function CasinoDetailPage({ casinoSlug }: CasinoDetailPageProps) {
               </div>
             )}
 
-            {/* External URL for blogs/review sites */}
+            {/* External URL button - only for blogs */}
             {isExternal && casino.external_url && (
               <div className="mb-4 sm:mb-6">
                 <a

@@ -41,12 +41,11 @@ export function CasinoCard({ casino }: CasinoCardProps) {
     new Date(casino.promo_code_expires_at) > new Date()
   );
   
-  // Use external URL for blogs/review sites, otherwise use internal link
-  const href = (casino.entry_type === 'blog' || casino.entry_type === 'review-site') && casino.external_url
-    ? casino.external_url
-    : `/casino/${slug}`;
+  // All cards use internal links to catalog pages
+  const href = `/casino/${slug}`;
   
-  const isExternal = (casino.entry_type === 'blog' || casino.entry_type === 'review-site') && casino.external_url;
+  // Only blogs use external links if external_url is provided
+  const isExternal = casino.entry_type === 'blog' && casino.external_url;
 
   const CardContent = (
     <div className="p-4 sm:p-6">
@@ -83,7 +82,7 @@ export function CasinoCard({ casino }: CasinoCardProps) {
                 <CheckCircle size={16} className="sm:w-[18px] sm:h-[18px] text-green-500" aria-label="Verified" />
               </span>
             )}
-            {isExternal && (
+            {isExternal && casino.entry_type === 'blog' && (
               <ExternalLink size={14} className="sm:w-4 sm:h-4 text-gray-400 dark:text-gray-400 flex-shrink-0" />
             )}
           </div>
@@ -158,7 +157,7 @@ export function CasinoCard({ casino }: CasinoCardProps) {
       
       <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-gray-200 dark:border-gray-600">
         <span className="text-xs sm:text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1">
-          {isExternal ? 'Visit Site' : 'Read Reviews'} →
+          {casino.entry_type === 'review-site' ? 'View Details' : casino.entry_type === 'sister-site' ? 'View Details' : isExternal ? 'Visit Site' : 'Read Reviews'} →
         </span>
       </div>
     </div>
