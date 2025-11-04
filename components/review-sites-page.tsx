@@ -6,6 +6,119 @@ import { CasinoCard } from "./casino-card";
 import type { Casino } from "@/lib/database.types";
 import { Search, FileText, CheckCircle, Ticket } from "lucide-react";
 
+// Demo data for review sites
+const demoReviewSites: Casino[] = [
+  {
+    id: "demo-review-1",
+    name: "Casino Review Portal",
+    slug: "casino-review-portal",
+    logo_url: "https://via.placeholder.com/150?text=Review",
+    bonus: "Personal reviews, pros & cons, alternatives, registration help",
+    license: "N/A",
+    description: "A comprehensive review site that provides personal casino reviews, lists pros and cons, suggests alternatives, helps with registration, provides promo codes, assists with withdrawals, and offers detailed reviews.",
+    country: undefined,
+    payment_methods: undefined,
+    rating_avg: 4.2,
+    rating_count: 78,
+    entry_type: "review-site",
+    external_url: "https://example.com/review-service",
+    verified: false,
+    is_featured: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: "demo-review-2",
+    name: "Casino Analyst Pro",
+    slug: "casino-analyst-pro",
+    logo_url: "https://via.placeholder.com/150?text=Analyst",
+    bonus: "Expert analysis, withdrawal guides, promo code database",
+    license: "N/A",
+    description: "Professional casino analysis site offering expert reviews, detailed pros and cons, withdrawal assistance guides, comprehensive promo code database, and alternative recommendations.",
+    country: undefined,
+    payment_methods: undefined,
+    rating_avg: 4.5,
+    rating_count: 124,
+    entry_type: "review-site",
+    external_url: "https://example.com/analyst-pro",
+    verified: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: "demo-review-3",
+    name: "Casino Guide Hub",
+    slug: "casino-guide-hub",
+    logo_url: "https://via.placeholder.com/150?text=Guide",
+    bonus: "Registration help, withdrawal support, detailed reviews",
+    license: "N/A",
+    description: "Your complete guide to online casinos. Provides step-by-step registration help, withdrawal assistance, detailed reviews with pros and cons, and exclusive promo codes.",
+    country: undefined,
+    payment_methods: undefined,
+    rating_avg: 4.3,
+    rating_count: 98,
+    entry_type: "review-site",
+    external_url: "https://example.com/guide-hub",
+    verified: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: "demo-review-4",
+    name: "Casino Insights Pro",
+    slug: "casino-insights-pro",
+    logo_url: "https://via.placeholder.com/150?text=Insights",
+    bonus: "In-depth reviews, comparison tools, promo code finder",
+    license: "N/A",
+    description: "Professional casino insights platform offering in-depth reviews, comparison tools, comprehensive promo code finder, withdrawal guides, and personalized recommendations.",
+    country: undefined,
+    payment_methods: undefined,
+    rating_avg: 4.4,
+    rating_count: 112,
+    entry_type: "review-site",
+    external_url: "https://example.com/insights-pro",
+    verified: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: "demo-review-5",
+    name: "Casino Review Expert",
+    slug: "casino-review-expert",
+    logo_url: "https://via.placeholder.com/150?text=Expert",
+    bonus: "Expert reviews, alternatives, registration assistance",
+    license: "N/A",
+    description: "Expert casino review site providing detailed analysis, pros and cons, alternative casino recommendations, step-by-step registration help, and withdrawal support guides.",
+    country: undefined,
+    payment_methods: undefined,
+    rating_avg: 4.3,
+    rating_count: 89,
+    entry_type: "review-site",
+    external_url: "https://example.com/review-expert",
+    verified: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: "demo-review-6",
+    name: "Casino Comparison Hub",
+    slug: "casino-comparison-hub",
+    logo_url: "https://via.placeholder.com/150?text=Compare",
+    bonus: "Side-by-side comparisons, promo codes, withdrawal help",
+    license: "N/A",
+    description: "Compare casinos side-by-side with detailed reviews, pros and cons, alternative options, exclusive promo codes, and comprehensive withdrawal assistance guides.",
+    country: undefined,
+    payment_methods: undefined,
+    rating_avg: 4.2,
+    rating_count: 95,
+    entry_type: "review-site",
+    external_url: "https://example.com/comparison-hub",
+    verified: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+];
+
 export function ReviewSitesPage() {
   const [casinos, setCasinos] = useState<Casino[]>([]);
   const [filteredCasinos, setFilteredCasinos] = useState<Casino[]>([]);
@@ -66,10 +179,17 @@ export function ReviewSitesPage() {
 
       if (error) throw error;
       
-      setCasinos(data || []);
+      // Use loaded data if available, otherwise use demo data
+      if (data && data.length > 0) {
+        setCasinos(data);
+      } else {
+        // No data in database, use demo data
+        setCasinos(demoReviewSites);
+      }
     } catch (error) {
       console.error("Error loading review sites:", error);
-      setCasinos([]);
+      // On error, use demo data as fallback
+      setCasinos(demoReviewSites);
     } finally {
       setLoading(false);
     }

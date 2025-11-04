@@ -6,6 +6,111 @@ import { CasinoCard } from "./casino-card";
 import type { Casino } from "@/lib/database.types";
 import { Search, Filter, Link2 } from "lucide-react";
 
+// Demo data for sister sites
+const demoSisterSites: Casino[] = [
+  {
+    id: "demo-sister-1",
+    name: "888 Casino Sister Site",
+    slug: "888-casino-sister",
+    logo_url: "https://via.placeholder.com/150?text=888+Sister",
+    bonus: "Exclusive Welcome Bonus: $400 + 88 Free Spins",
+    license: "UK Gambling Commission",
+    description: "Sister site of 888 Casino offering exclusive bonuses and promotions. Same trusted license and gaming experience with special offers for new players.",
+    country: "United Kingdom",
+    payment_methods: ["Visa", "Mastercard", "PayPal", "Skrill", "Neteller", "Apple Pay"],
+    rating_avg: 4.4,
+    rating_count: 156,
+    entry_type: "sister-site",
+    promo_code: "SISTER888",
+    promo_code_expires_at: new Date(Date.now() + 20 * 24 * 60 * 60 * 1000).toISOString(),
+    editorial_rating: 4.5,
+    verified: true,
+    is_featured: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: "demo-sister-2",
+    name: "Bet365 Sister Casino",
+    slug: "bet365-sister-casino",
+    logo_url: "https://via.placeholder.com/150?text=Bet365+Sister",
+    bonus: "Welcome Package: $500 + 200 Free Spins",
+    license: "UK Gambling Commission",
+    description: "Sister site of Bet365 Casino with exclusive promotions and bonuses. Same reliable gaming platform and trusted license.",
+    country: "United Kingdom",
+    payment_methods: ["Visa", "Mastercard", "PayPal", "Skrill", "Neteller"],
+    rating_avg: 4.6,
+    rating_count: 203,
+    entry_type: "sister-site",
+    promo_code: "SISTER365",
+    promo_code_expires_at: new Date(Date.now() + 25 * 24 * 60 * 60 * 1000).toISOString(),
+    editorial_rating: 4.7,
+    verified: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: "demo-sister-3",
+    name: "LeoVegas Sister Site",
+    slug: "leovegas-sister-site",
+    logo_url: "https://via.placeholder.com/150?text=LeoVegas+Sister",
+    bonus: "Exclusive Bonus: $300 + 100 Free Spins",
+    license: "Malta Gaming Authority",
+    description: "Sister site of LeoVegas offering mobile-optimized gaming experience with exclusive bonuses for new players.",
+    country: "Sweden",
+    payment_methods: ["Visa", "Mastercard", "PayPal", "Trustly", "Zimpler"],
+    rating_avg: 4.3,
+    rating_count: 145,
+    entry_type: "sister-site",
+    promo_code: "SISTERLEO",
+    promo_code_expires_at: new Date(Date.now() + 18 * 24 * 60 * 60 * 1000).toISOString(),
+    editorial_rating: 4.4,
+    verified: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: "demo-sister-4",
+    name: "Betway Sister Casino",
+    slug: "betway-sister-casino",
+    logo_url: "https://via.placeholder.com/150?text=Betway+Sister",
+    bonus: "Special Welcome Bonus: $600 + 150 Free Spins",
+    license: "UK Gambling Commission",
+    description: "Sister site of Betway Casino providing exclusive offers and bonuses. Same trusted platform with additional promotional benefits.",
+    country: "United Kingdom",
+    payment_methods: ["Visa", "Mastercard", "PayPal", "Bank Transfer"],
+    rating_avg: 4.5,
+    rating_count: 178,
+    entry_type: "sister-site",
+    promo_code: "SISTERBET",
+    promo_code_expires_at: new Date(Date.now() + 22 * 24 * 60 * 60 * 1000).toISOString(),
+    editorial_rating: 4.6,
+    verified: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: "demo-sister-5",
+    name: "Royal Vegas Sister Site",
+    slug: "royal-vegas-sister",
+    logo_url: "https://via.placeholder.com/150?text=Royal+Sister",
+    bonus: "Exclusive Welcome Package: $450 + 120 Free Spins",
+    license: "Malta Gaming Authority",
+    description: "Sister site of Royal Vegas Casino offering premium gaming experience with exclusive bonuses and promotions for new members.",
+    country: "Malta",
+    payment_methods: ["Visa", "Mastercard", "PayPal", "Skrill", "Neteller", "Bitcoin"],
+    rating_avg: 4.4,
+    rating_count: 167,
+    entry_type: "sister-site",
+    promo_code: "SISTERRV",
+    promo_code_expires_at: new Date(Date.now() + 21 * 24 * 60 * 60 * 1000).toISOString(),
+    editorial_rating: 4.5,
+    verified: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+];
+
 export function SisterSitesPage() {
   const [casinos, setCasinos] = useState<Casino[]>([]);
   const [filteredCasinos, setFilteredCasinos] = useState<Casino[]>([]);
@@ -88,10 +193,17 @@ export function SisterSitesPage() {
 
       if (error) throw error;
       
-      setCasinos(data || []);
+      // Use loaded data if available, otherwise use demo data
+      if (data && data.length > 0) {
+        setCasinos(data);
+      } else {
+        // No data in database, use demo data
+        setCasinos(demoSisterSites);
+      }
     } catch (error) {
       console.error("Error loading sister sites:", error);
-      setCasinos([]);
+      // On error, use demo data as fallback
+      setCasinos(demoSisterSites);
     } finally {
       setLoading(false);
     }
