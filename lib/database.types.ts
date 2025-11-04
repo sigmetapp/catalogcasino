@@ -1,3 +1,5 @@
+export type EntryType = 'casino' | 'sister-site' | 'blog' | 'proxy';
+
 export interface Casino {
   id: string;
   name: string;
@@ -10,6 +12,14 @@ export interface Casino {
   rating_count: number;
   country?: string;
   payment_methods?: string[];
+  entry_type?: EntryType;
+  promo_code?: string | null;
+  promo_code_expires_at?: string | null;
+  editorial_rating?: number | null;
+  external_url?: string | null;
+  verified?: boolean;
+  sister_site_of?: string | null;
+  is_featured?: boolean;
   created_at: string;
   updated_at: string;
 }
