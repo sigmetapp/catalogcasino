@@ -37,6 +37,7 @@ interface CasinoDetailPageProps {
 export function CasinoDetailPage({ casinoSlug }: CasinoDetailPageProps) {
   const [casino, setCasino] = useState<Casino | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [sisterSites, setSisterSites] = useState<Casino[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
@@ -135,11 +136,44 @@ export function CasinoDetailPage({ casinoSlug }: CasinoDetailPageProps) {
     loadCasino();
   }, [loadCasino]);
 
+  const loadSisterSites = useCallback(async () => {
+    try {
+      const supabase = createSupabaseClient();
+      // Try to load from database first
+      const { data, error } = await supabase
+        .from("casinos")
+        .select("*")
+        .eq("entry_type", "sister-site")
+        .order("is_featured", { ascending: false })
+        .order("rating_avg", { ascending: false })
+        .limit(10);
+
+      if (error) throw error;
+      
+      // If no data in database, use demo data
+      if (data && data.length > 0) {
+        setSisterSites(data);
+      } else {
+        // Use demo sister sites
+        const demoSisters = demoCasinos.filter(c => c.entry_type === 'sister-site');
+        setSisterSites(demoSisters);
+      }
+    } catch (error) {
+      console.error("Error loading sister sites:", error);
+      // On error, use demo data
+      const demoSisters = demoCasinos.filter(c => c.entry_type === 'sister-site');
+      setSisterSites(demoSisters);
+    }
+  }, []);
+
   useEffect(() => {
     if (casino) {
       loadReviews();
+      if (casino.entry_type === 'sister-site') {
+        loadSisterSites();
+      }
     }
-  }, [casino, loadReviews]);
+  }, [casino, loadReviews, loadSisterSites]);
 
   async function handleReviewDeleted() {
     await loadReviews();
@@ -284,8 +318,8 @@ export function CasinoDetailPage({ casinoSlug }: CasinoDetailPageProps) {
               </div>
             </div>
 
-            {/* Promo Code */}
-            {isPromoValid && (
+            {/* Promo Code - Regular template for non-sister sites */}
+            {isPromoValid && casino.entry_type !== 'sister-site' && (
               <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
                 <div className="flex items-start sm:items-center justify-between gap-3">
                   <div className="flex items-start sm:items-center gap-2 sm:gap-3 flex-1 min-w-0">
@@ -312,6 +346,65 @@ export function CasinoDetailPage({ casinoSlug }: CasinoDetailPageProps) {
                       )}
                     </div>
                   </div>
+                </div>
+              </div>
+            )}
+
+            {/* Promo Code - Sister Sites table */}
+            {casino.entry_type === 'sister-site' && sisterSites.length > 0 && (
+              <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
+                <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+                  <Ticket size={20} className="sm:w-6 sm:h-6 text-purple-600 dark:text-purple-400 flex-shrink-0" />
+                  <p className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white">Exclusive Promo Codes</p>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse">
+                    <thead>
+                      <tr className="bg-purple-100 dark:bg-purple-900/40 border-b border-purple-200 dark:border-purple-700">
+                        <th className="px-3 sm:px-4 py-2 sm:py-3 text-left text-xs sm:text-sm font-semibold text-gray-900 dark:text-white">
+                          Sister Site
+                        </th>
+                        <th className="px-3 sm:px-4 py-2 sm:py-3 text-left text-xs sm:text-sm font-semibold text-gray-900 dark:text-white">
+                          Promo Code
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {sisterSites.map((site) => {
+                        const siteSlug = site.slug || generateSlug(site.name) || site.id;
+                        const hasValidPromo = site.promo_code && (
+                          !site.promo_code_expires_at || 
+                          new Date(site.promo_code_expires_at) > new Date()
+                        );
+                        return (
+                          <tr 
+                            key={site.id} 
+                            className="border-b border-purple-200 dark:border-purple-700 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition-colors"
+                          >
+                            <td className="px-3 sm:px-4 py-2 sm:py-3">
+                              <a
+                                href={`/casino/${siteSlug}`}
+                                className="text-sm sm:text-base font-medium text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 hover:underline transition-colors"
+                              >
+                                {site.name}
+                              </a>
+                            </td>
+                            <td className="px-3 sm:px-4 py-2 sm:py-3">
+                              {hasValidPromo ? (
+                                <code className="px-2 sm:px-3 py-1 bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 rounded font-mono text-xs sm:text-sm font-semibold">
+                                  {site.promo_code}
+                                </code>
+                              ) : (
+                                <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 italic">
+                                  No promo code
+                                </span>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
                 </div>
               </div>
             )}
@@ -382,6 +475,21 @@ export function CasinoDetailPage({ casinoSlug }: CasinoDetailPageProps) {
               <div className="mb-4 sm:mb-6">
                 <h3 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white mb-2">Description</h3>
                 <p className="text-sm sm:text-base text-gray-700 dark:text-gray-200 leading-relaxed">{casino.description}</p>
+              </div>
+            )}
+
+            {/* Visit Site button for Review Sites */}
+            {casino.entry_type === 'review-site' && casino.external_url && (
+              <div className="mb-4 sm:mb-6">
+                <a
+                  href={casino.external_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors text-sm sm:text-base font-medium shadow-md hover:shadow-lg"
+                >
+                  <ExternalLink size={18} className="sm:w-5 sm:h-5" />
+                  Visit Site
+                </a>
               </div>
             )}
           </div>
