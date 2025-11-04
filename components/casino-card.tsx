@@ -2,9 +2,12 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Star, CheckCircle, ExternalLink, Ticket, Sparkles } from "lucide-react";
+import { Star, CheckCircle, ExternalLink, Ticket, Sparkles, Edit } from "lucide-react";
 import type { Casino } from "@/lib/database.types";
 import { getRatingStars, generateSlug } from "@/lib/utils";
+import { useAuth } from "./auth-provider";
+import { useState, useEffect } from "react";
+import { createSupabaseClient } from "@/lib/supabase";
 
 interface CasinoCardProps {
   casino: Casino;
@@ -14,7 +17,7 @@ const getEntryTypeLabel = (type?: string) => {
   switch (type) {
     case 'sister-site': return 'Sister Site';
     case 'blog': return 'Blog';
-    case 'proxy': return 'Proxy Site';
+    case 'review-site': return 'Review Site';
     default: return 'Casino';
   }
 };
@@ -23,12 +26,14 @@ const getEntryTypeColor = (type?: string) => {
   switch (type) {
     case 'sister-site': return 'bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200';
     case 'blog': return 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200';
-    case 'proxy': return 'bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200';
+    case 'review-site': return 'bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200';
     default: return 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200';
   }
 };
 
 export function CasinoCard({ casino }: CasinoCardProps) {
+  const { user } = useAuth();
+  const [isAdmin, setIsAdmin] = useState(false);
   const stars = getRatingStars(casino.rating_avg);
   const editorialStars = casino.editorial_rating ? getRatingStars(casino.editorial_rating) : null;
   
@@ -41,12 +46,34 @@ export function CasinoCard({ casino }: CasinoCardProps) {
     new Date(casino.promo_code_expires_at) > new Date()
   );
   
-  // Use external URL for blogs/proxy sites, otherwise use internal link
-  const href = (casino.entry_type === 'blog' || casino.entry_type === 'proxy') && casino.external_url
-    ? casino.external_url
-    : `/casino/${slug}`;
+  // All cards use internal links to catalog pages
+  const href = `/casino/${slug}`;
+  const editHref = `/admin/edit/${slug}`;
   
-  const isExternal = (casino.entry_type === 'blog' || casino.entry_type === 'proxy') && casino.external_url;
+  // Only blogs use external links if external_url is provided
+  const isExternal = casino.entry_type === 'blog' && casino.external_url;
+
+  useEffect(() => {
+    async function checkAdmin() {
+      if (user) {
+        try {
+          const supabase = createSupabaseClient();
+          const { data } = await supabase
+            .from("users")
+            .select("is_admin")
+            .eq("id", user.id)
+            .single();
+          setIsAdmin(data?.is_admin ?? false);
+        } catch (error) {
+          console.error("Failed to check admin status:", error);
+          setIsAdmin(false);
+        }
+      } else {
+        setIsAdmin(false);
+      }
+    }
+    checkAdmin();
+  }, [user]);
 
   const CardContent = (
     <div className="p-4 sm:p-6">
@@ -63,8 +90,12 @@ export function CasinoCard({ casino }: CasinoCardProps) {
             width={80}
             height={80}
             className="rounded-lg object-contain w-16 h-16 sm:w-20 sm:h-20"
+            unoptimized={!casino.logo_url || !casino.logo_url.startsWith('/')}
             onError={(e) => {
-              (e.target as HTMLImageElement).src = "/placeholder-logo.svg";
+              const target = e.target as HTMLImageElement;
+              if (!target.src.includes("placeholder-logo.svg")) {
+                target.src = "/placeholder-logo.svg";
+              }
             }}
           />
         </div>
@@ -79,7 +110,7 @@ export function CasinoCard({ casino }: CasinoCardProps) {
                 <CheckCircle size={16} className="sm:w-[18px] sm:h-[18px] text-green-500" aria-label="Verified" />
               </span>
             )}
-            {isExternal && (
+            {isExternal && casino.entry_type === 'blog' && (
               <ExternalLink size={14} className="sm:w-4 sm:h-4 text-gray-400 dark:text-gray-400 flex-shrink-0" />
             )}
           </div>
@@ -152,10 +183,20 @@ export function CasinoCard({ casino }: CasinoCardProps) {
         </div>
       </div>
       
-      <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-gray-200 dark:border-gray-600">
+      <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-gray-200 dark:border-gray-600 flex items-center justify-between gap-2">
         <span className="text-xs sm:text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1">
-          {isExternal ? 'Visit Site' : 'Read Reviews'} →
+          {casino.entry_type === 'review-site' ? 'View Details' : casino.entry_type === 'sister-site' ? 'View Details' : isExternal ? 'Visit Site' : 'Read Reviews'} →
         </span>
+        {isAdmin && (
+          <Link
+            href={editHref}
+            onClick={(e) => e.stopPropagation()}
+            className="inline-flex items-center gap-1 px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-xs sm:text-sm font-medium"
+          >
+            <Edit size={12} className="sm:w-4 sm:h-4" />
+            Edit
+          </Link>
+        )}
       </div>
     </div>
   );

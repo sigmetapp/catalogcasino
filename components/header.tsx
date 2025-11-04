@@ -66,6 +66,18 @@ export function Header() {
             >
               Home
             </Link>
+            <Link
+              href="/sister-sites"
+              className="hover:opacity-80 transition-opacity px-2 sm:px-3 py-2 rounded text-sm sm:text-base"
+            >
+              Sister Sites
+            </Link>
+            <Link
+              href="/review-sites"
+              className="hover:opacity-80 transition-opacity px-2 sm:px-3 py-2 rounded text-sm sm:text-base"
+            >
+              Review Sites
+            </Link>
             
             {isAdmin && (
               <Link

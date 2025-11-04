@@ -8,14 +8,17 @@ import { RatingStars } from "./rating-stars";
 import { ReviewForm } from "./review-form";
 import { ReviewCard } from "./review-card";
 import { formatDate, getRatingStars, generateSlug } from "@/lib/utils";
-import { Star, CreditCard, Shield, Globe, CheckCircle, ExternalLink, Ticket, Sparkles, Copy } from "lucide-react";
+import { Star, CreditCard, Shield, Globe, CheckCircle, ExternalLink, Ticket, Sparkles, Copy, Link2, FileText, ListChecks, HelpCircle, Gift, ArrowRightLeft, Users, Edit } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { demoCasinos } from "@/lib/demo-data";
+import { useAuth } from "./auth-provider";
+import Link from "next/link";
 
 const getEntryTypeLabel = (type?: string) => {
   switch (type) {
     case 'sister-site': return 'Sister Site';
     case 'blog': return 'Blog';
-    case 'proxy': return 'Proxy Site';
+    case 'review-site': return 'Review Site';
     default: return 'Casino';
   }
 };
@@ -24,7 +27,7 @@ const getEntryTypeColor = (type?: string) => {
   switch (type) {
     case 'sister-site': return 'bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200';
     case 'blog': return 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200';
-    case 'proxy': return 'bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200';
+    case 'review-site': return 'bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200';
     default: return 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200';
   }
 };
@@ -34,10 +37,13 @@ interface CasinoDetailPageProps {
 }
 
 export function CasinoDetailPage({ casinoSlug }: CasinoDetailPageProps) {
+  const { user } = useAuth();
   const [casino, setCasino] = useState<Casino | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [sisterSites, setSisterSites] = useState<Casino[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const router = useRouter();
 
   const loadCasino = useCallback(async () => {
@@ -85,11 +91,24 @@ export function CasinoDetailPage({ casinoSlug }: CasinoDetailPageProps) {
         }
       }
 
-      if (error) throw error;
-      if (!data) {
+      // If still not found in database, try demo data
+      if (error || !data) {
+        const demoCasino = demoCasinos.find(casino => 
+          casino.slug === casinoSlug || 
+          generateSlug(casino.name) === casinoSlug ||
+          casino.id === casinoSlug
+        );
+
+        if (demoCasino) {
+          setCasino(demoCasino);
+          return;
+        }
+
+        // If not found even in demo data, show error
         setError("Casino not found");
         return;
       }
+
       setCasino(data);
     } catch (err: any) {
       console.error("Error loading casino:", err);
@@ -122,10 +141,65 @@ export function CasinoDetailPage({ casinoSlug }: CasinoDetailPageProps) {
   }, [loadCasino]);
 
   useEffect(() => {
+    async function checkAdmin() {
+      if (user) {
+        try {
+          const supabase = createSupabaseClient();
+          const { data } = await supabase
+            .from("users")
+            .select("is_admin")
+            .eq("id", user.id)
+            .single();
+          setIsAdmin(data?.is_admin ?? false);
+        } catch (error) {
+          console.error("Failed to check admin status:", error);
+          setIsAdmin(false);
+        }
+      } else {
+        setIsAdmin(false);
+      }
+    }
+    checkAdmin();
+  }, [user]);
+
+  const loadSisterSites = useCallback(async () => {
+    try {
+      const supabase = createSupabaseClient();
+      // Try to load from database first
+      const { data, error } = await supabase
+        .from("casinos")
+        .select("*")
+        .eq("entry_type", "sister-site")
+        .order("is_featured", { ascending: false })
+        .order("rating_avg", { ascending: false })
+        .limit(10);
+
+      if (error) throw error;
+      
+      // If no data in database, use demo data
+      if (data && data.length > 0) {
+        setSisterSites(data);
+      } else {
+        // Use demo sister sites
+        const demoSisters = demoCasinos.filter(c => c.entry_type === 'sister-site');
+        setSisterSites(demoSisters);
+      }
+    } catch (error) {
+      console.error("Error loading sister sites:", error);
+      // On error, use demo data
+      const demoSisters = demoCasinos.filter(c => c.entry_type === 'sister-site');
+      setSisterSites(demoSisters);
+    }
+  }, []);
+
+  useEffect(() => {
     if (casino) {
       loadReviews();
+      if (casino.entry_type === 'sister-site') {
+        loadSisterSites();
+      }
     }
-  }, [casino, loadReviews]);
+  }, [casino, loadReviews, loadSisterSites]);
 
   async function handleReviewDeleted() {
     await loadReviews();
@@ -170,8 +244,11 @@ export function CasinoDetailPage({ casinoSlug }: CasinoDetailPageProps) {
     new Date(casino.promo_code_expires_at) > new Date()
   );
   
-  const isExternal = (casino.entry_type === 'blog' || casino.entry_type === 'proxy') && casino.external_url;
+  // Only blogs use external links if external_url is provided
+  const isExternal = casino.entry_type === 'blog' && casino.external_url;
   const isCasino = casino.entry_type === 'casino' || !casino.entry_type;
+  // Allow reviews for casinos, sister sites, and review sites
+  const allowReviews = isCasino || casino.entry_type === 'sister-site' || casino.entry_type === 'review-site';
 
   const copyPromoCode = () => {
     if (casino.promo_code) {
@@ -180,14 +257,30 @@ export function CasinoDetailPage({ casinoSlug }: CasinoDetailPageProps) {
     }
   };
 
+  if (!casino) return null;
+
+  const slug = casino.slug || generateSlug(casino.name) || casino.id;
+  const editHref = `/admin/edit/${slug}`;
+
   return (
     <div className="space-y-6 sm:space-y-8">
-      <button
-        onClick={() => router.back()}
-        className="text-sm sm:text-base text-blue-600 dark:text-blue-400 hover:underline mb-2 sm:mb-4"
-      >
-        ← Back
-      </button>
+      <div className="flex items-center justify-between gap-4">
+        <button
+          onClick={() => router.back()}
+          className="text-sm sm:text-base text-blue-600 dark:text-blue-400 hover:underline mb-2 sm:mb-4"
+        >
+          ← Back
+        </button>
+        {isAdmin && (
+          <Link
+            href={editHref}
+            className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm sm:text-base font-medium"
+          >
+            <Edit size={16} className="sm:w-5 sm:h-5" />
+            Edit
+          </Link>
+        )}
+      </div>
 
       <div className="bg-white dark:bg-gray-900 rounded-lg shadow-md p-4 sm:p-6 md:p-8 border border-gray-200 dark:border-gray-800">
         <div className="flex flex-col md:flex-row gap-4 sm:gap-6 md:gap-8">
@@ -203,8 +296,12 @@ export function CasinoDetailPage({ casinoSlug }: CasinoDetailPageProps) {
               width={200}
               height={200}
               className="rounded-lg object-contain bg-gray-100 dark:bg-gray-700 p-3 sm:p-4 w-32 h-32 sm:w-40 sm:h-40 md:w-48 md:h-48"
+              unoptimized={!casino.logo_url || !casino.logo_url.startsWith('/')}
               onError={(e) => {
-                (e.target as HTMLImageElement).src = "/placeholder-logo.svg";
+                const target = e.target as HTMLImageElement;
+                if (!target.src.includes("placeholder-logo.svg")) {
+                  target.src = "/placeholder-logo.svg";
+                }
               }}
             />
           </div>
@@ -219,7 +316,7 @@ export function CasinoDetailPage({ casinoSlug }: CasinoDetailPageProps) {
                   <CheckCircle size={20} className="sm:w-6 sm:h-6 text-green-500" aria-label="Verified" />
                 </span>
               )}
-              {isExternal && (
+              {isExternal && casino.entry_type === 'blog' && (
                 <ExternalLink size={18} className="sm:w-5 sm:h-5 text-gray-400 dark:text-gray-400 flex-shrink-0" />
               )}
             </div>
@@ -265,8 +362,8 @@ export function CasinoDetailPage({ casinoSlug }: CasinoDetailPageProps) {
               </div>
             </div>
 
-            {/* Promo Code */}
-            {isPromoValid && (
+            {/* Promo Code - Regular template for non-sister sites */}
+            {isPromoValid && casino.entry_type !== 'sister-site' && (
               <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
                 <div className="flex items-start sm:items-center justify-between gap-3">
                   <div className="flex items-start sm:items-center gap-2 sm:gap-3 flex-1 min-w-0">
@@ -297,7 +394,86 @@ export function CasinoDetailPage({ casinoSlug }: CasinoDetailPageProps) {
               </div>
             )}
 
-            {/* External URL for blogs/proxy sites */}
+            {/* Promo Code - Sister Sites table */}
+            {casino.entry_type === 'sister-site' && sisterSites.length > 0 && (
+              <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
+                <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+                  <Ticket size={20} className="sm:w-6 sm:h-6 text-purple-600 dark:text-purple-400 flex-shrink-0" />
+                  <p className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white">Exclusive Promo Codes</p>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse">
+                    <thead>
+                      <tr className="bg-purple-100 dark:bg-purple-900/40 border-b border-purple-200 dark:border-purple-700">
+                        <th className="px-3 sm:px-4 py-2 sm:py-3 text-left text-xs sm:text-sm font-semibold text-gray-900 dark:text-white">
+                          Sister Site
+                        </th>
+                        <th className="px-3 sm:px-4 py-2 sm:py-3 text-left text-xs sm:text-sm font-semibold text-gray-900 dark:text-white">
+                          GEO
+                        </th>
+                        <th className="px-3 sm:px-4 py-2 sm:py-3 text-left text-xs sm:text-sm font-semibold text-gray-900 dark:text-white">
+                          Promo Code
+                        </th>
+                        <th className="px-3 sm:px-4 py-2 sm:py-3 text-center text-xs sm:text-sm font-semibold text-gray-900 dark:text-white">
+                          Action
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {sisterSites.map((site) => {
+                        const siteSlug = site.slug || generateSlug(site.name) || site.id;
+                        const hasValidPromo = site.promo_code && (
+                          !site.promo_code_expires_at || 
+                          new Date(site.promo_code_expires_at) > new Date()
+                        );
+                        return (
+                          <tr 
+                            key={site.id} 
+                            className="border-b border-purple-200 dark:border-purple-700 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition-colors"
+                          >
+                            <td className="px-3 sm:px-4 py-2 sm:py-3">
+                              <a
+                                href={`/casino/${siteSlug}`}
+                                className="text-sm sm:text-base font-medium text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 hover:underline transition-colors"
+                              >
+                                {site.name}
+                              </a>
+                            </td>
+                            <td className="px-3 sm:px-4 py-2 sm:py-3">
+                              <span className="text-xs sm:text-sm text-gray-700 dark:text-gray-300">
+                                {site.country || 'N/A'}
+                              </span>
+                            </td>
+                            <td className="px-3 sm:px-4 py-2 sm:py-3">
+                              {hasValidPromo ? (
+                                <code className="px-2 sm:px-3 py-1 bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 rounded font-mono text-xs sm:text-sm font-semibold">
+                                  {site.promo_code}
+                                </code>
+                              ) : (
+                                <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 italic">
+                                  No promo code
+                                </span>
+                              )}
+                            </td>
+                            <td className="px-3 sm:px-4 py-2 sm:py-3">
+                              <a
+                                href={`/casino/${siteSlug}`}
+                                className="inline-flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors text-xs sm:text-sm font-medium"
+                              >
+                                Visit Site
+                                <ExternalLink size={14} className="sm:w-4 sm:h-4" />
+                              </a>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* External URL button - only for blogs */}
             {isExternal && casino.external_url && (
               <div className="mb-4 sm:mb-6">
                 <a
@@ -365,11 +541,203 @@ export function CasinoDetailPage({ casinoSlug }: CasinoDetailPageProps) {
                 <p className="text-sm sm:text-base text-gray-700 dark:text-gray-200 leading-relaxed">{casino.description}</p>
               </div>
             )}
+
+            {/* GEO for Review Sites */}
+            {casino.entry_type === 'review-site' && casino.country && (
+              <div className="mb-4 sm:mb-6">
+                <div className="flex items-center gap-2">
+                  <Globe size={18} className="sm:w-5 sm:h-5 text-orange-600 dark:text-orange-400" />
+                  <div>
+                    <p className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-white">GEO</p>
+                    <p className="text-sm sm:text-base text-gray-700 dark:text-gray-200">{casino.country}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* GEO for Sister Sites */}
+            {casino.entry_type === 'sister-site' && casino.country && (
+              <div className="mb-4 sm:mb-6">
+                <div className="flex items-center gap-2">
+                  <Globe size={18} className="sm:w-5 sm:h-5 text-purple-600 dark:text-purple-400" />
+                  <div>
+                    <p className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-white">GEO</p>
+                    <p className="text-sm sm:text-base text-gray-700 dark:text-gray-200">{casino.country}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Visit Site button for Review Sites */}
+            {casino.entry_type === 'review-site' && casino.external_url && (
+              <div className="mb-4 sm:mb-6">
+                <a
+                  href={casino.external_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors text-sm sm:text-base font-medium shadow-md hover:shadow-lg"
+                >
+                  <ExternalLink size={18} className="sm:w-5 sm:h-5" />
+                  Visit Site
+                </a>
+              </div>
+            )}
           </div>
         </div>
       </div>
 
-      {isCasino && (
+      {/* Special template for Sister Sites */}
+      {casino.entry_type === 'sister-site' && (
+        <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg shadow-md p-4 sm:p-6 border border-purple-200 dark:border-purple-800">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-4 sm:mb-6 flex items-center gap-2">
+            <Link2 className="text-purple-600 dark:text-purple-400" size={24} />
+            Sister Site Information
+          </h2>
+          
+          <div className="space-y-4">
+            {casino.sister_site_of && (
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-purple-200 dark:border-purple-700">
+                <h3 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
+                  <Link2 size={18} className="text-purple-600 dark:text-purple-400" />
+                  Parent Casino
+                </h3>
+                <p className="text-sm sm:text-base text-gray-700 dark:text-gray-200">
+                  This is a sister site that shares the same license and gaming platform as the parent casino.
+                </p>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-purple-200 dark:border-purple-700">
+                <h3 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
+                  <Gift size={18} className="text-purple-600 dark:text-purple-400" />
+                  Exclusive Bonuses
+                </h3>
+                <p className="text-sm sm:text-base text-gray-700 dark:text-gray-200">
+                  Sister sites often offer exclusive bonuses and promotions that differ from the parent casino, providing unique opportunities for players.
+                </p>
+              </div>
+
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-purple-200 dark:border-purple-700">
+                <h3 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
+                  <Shield size={18} className="text-purple-600 dark:text-purple-400" />
+                  Same Trust & License
+                </h3>
+                <p className="text-sm sm:text-base text-gray-700 dark:text-gray-200">
+                  Sister sites share the same trusted license and regulatory oversight as their parent casino, ensuring the same level of security and fairness.
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-purple-200 dark:border-purple-700">
+              <h3 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
+                <Users size={18} className="text-purple-600 dark:text-purple-400" />
+                Benefits of Sister Sites
+              </h3>
+              <ul className="list-disc list-inside space-y-2 text-sm sm:text-base text-gray-700 dark:text-gray-200">
+                <li>Exclusive promotional offers and bonuses</li>
+                <li>Same trusted gaming platform and license</li>
+                <li>Shared account management (in some cases)</li>
+                <li>Access to the same game library</li>
+                <li>Additional welcome bonuses for new players</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Special template for Review Sites */}
+      {casino.entry_type === 'review-site' && (
+        <div className="bg-orange-50 dark:bg-orange-900/20 rounded-lg shadow-md p-4 sm:p-6 border border-orange-200 dark:border-orange-800">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-4 sm:mb-6 flex items-center gap-2">
+            <FileText className="text-orange-600 dark:text-orange-400" size={24} />
+            Review Site Services
+          </h2>
+          
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-orange-200 dark:border-orange-700">
+                <h3 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
+                  <FileText size={18} className="text-orange-600 dark:text-orange-400" />
+                  Personal Reviews
+                </h3>
+                <p className="text-sm sm:text-base text-gray-700 dark:text-gray-200">
+                  Detailed personal reviews of casinos with comprehensive analysis and real player experiences.
+                </p>
+              </div>
+
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-orange-200 dark:border-orange-700">
+                <h3 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
+                  <ListChecks size={18} className="text-orange-600 dark:text-orange-400" />
+                  Pros & Cons
+                </h3>
+                <p className="text-sm sm:text-base text-gray-700 dark:text-gray-200">
+                  Clear breakdown of advantages and disadvantages for each casino to help you make informed decisions.
+                </p>
+              </div>
+
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-orange-200 dark:border-orange-700">
+                <h3 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
+                  <ArrowRightLeft size={18} className="text-orange-600 dark:text-orange-400" />
+                  Alternatives
+                </h3>
+                <p className="text-sm sm:text-base text-gray-700 dark:text-gray-200">
+                  Recommendations for alternative casinos that might better suit your preferences and playing style.
+                </p>
+              </div>
+
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-orange-200 dark:border-orange-700">
+                <h3 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
+                  <HelpCircle size={18} className="text-orange-600 dark:text-orange-400" />
+                  Registration Help
+                </h3>
+                <p className="text-sm sm:text-base text-gray-700 dark:text-gray-200">
+                  Step-by-step guides and assistance for casino registration, account setup, and verification processes.
+                </p>
+              </div>
+
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-orange-200 dark:border-orange-700">
+                <h3 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
+                  <Ticket size={18} className="text-orange-600 dark:text-orange-400" />
+                  Promo Codes
+                </h3>
+                <p className="text-sm sm:text-base text-gray-700 dark:text-gray-200">
+                  Exclusive promo codes database with active codes and special offers for various casinos.
+                </p>
+              </div>
+
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-orange-200 dark:border-orange-700">
+                <h3 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
+                  <Gift size={18} className="text-orange-600 dark:text-orange-400" />
+                  Withdrawal Help
+                </h3>
+                <p className="text-sm sm:text-base text-gray-700 dark:text-gray-200">
+                  Comprehensive guides and support for withdrawal processes, including methods, limits, and troubleshooting.
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-orange-200 dark:border-orange-700">
+              <h3 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
+                <Star size={18} className="text-orange-600 dark:text-orange-400" />
+                What Review Sites Provide
+              </h3>
+              <ul className="list-disc list-inside space-y-2 text-sm sm:text-base text-gray-700 dark:text-gray-200">
+                <li>In-depth casino reviews with personal experiences</li>
+                <li>Detailed pros and cons for each casino</li>
+                <li>Alternative casino recommendations</li>
+                <li>Registration and account setup assistance</li>
+                <li>Exclusive promo codes and bonus offers</li>
+                <li>Withdrawal guides and support</li>
+                <li>Comparison tools and features</li>
+                <li>Expert analysis and recommendations</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {allowReviews && (
         <div className="bg-white dark:bg-gray-900 rounded-lg shadow-md p-4 sm:p-6 border border-gray-200 dark:border-gray-800">
           <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-4 sm:mb-6">
             Leave a Review
@@ -378,7 +746,7 @@ export function CasinoDetailPage({ casinoSlug }: CasinoDetailPageProps) {
         </div>
       )}
 
-      {isCasino && (
+      {allowReviews && (
         <div className="bg-white dark:bg-gray-900 rounded-lg shadow-md p-4 sm:p-6 border border-gray-200 dark:border-gray-800">
           <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-4 sm:mb-6">
             Reviews ({reviews.length})

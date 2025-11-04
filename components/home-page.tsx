@@ -5,6 +5,7 @@ import { createSupabaseClient } from "@/lib/supabase";
 import { CasinoCard } from "./casino-card";
 import type { Casino, EntryType } from "@/lib/database.types";
 import { Search, Filter, Sparkles, Ticket, CheckCircle } from "lucide-react";
+import Link from "next/link";
 
 // Demo data fallback
 const demoCasinos: Casino[] = [
@@ -103,24 +104,102 @@ const demoCasinos: Casino[] = [
     promo_code_expires_at: new Date(Date.now() + 20 * 24 * 60 * 60 * 1000).toISOString(), // 20 days from now
     editorial_rating: 4.5,
     verified: true,
+    is_featured: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: "demo-5b",
+    name: "Bet365 Sister Casino",
+    slug: "bet365-sister-casino",
+    logo_url: "https://via.placeholder.com/150?text=Bet365+Sister",
+    bonus: "Welcome Package: $500 + 200 Free Spins",
+    license: "UK Gambling Commission",
+    description: "Sister site of Bet365 Casino with exclusive promotions and bonuses. Same reliable gaming platform and trusted license.",
+    country: "United Kingdom",
+    payment_methods: ["Visa", "Mastercard", "PayPal", "Skrill", "Neteller"],
+    rating_avg: 4.6,
+    rating_count: 203,
+    entry_type: "sister-site",
+    promo_code: "SISTER365",
+    promo_code_expires_at: new Date(Date.now() + 25 * 24 * 60 * 60 * 1000).toISOString(),
+    editorial_rating: 4.7,
+    verified: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: "demo-5c",
+    name: "LeoVegas Sister Site",
+    slug: "leovegas-sister-site",
+    logo_url: "https://via.placeholder.com/150?text=LeoVegas+Sister",
+    bonus: "Exclusive Bonus: $300 + 100 Free Spins",
+    license: "Malta Gaming Authority",
+    description: "Sister site of LeoVegas offering mobile-optimized gaming experience with exclusive bonuses for new players.",
+    country: "Sweden",
+    payment_methods: ["Visa", "Mastercard", "PayPal", "Trustly", "Zimpler"],
+    rating_avg: 4.3,
+    rating_count: 145,
+    entry_type: "sister-site",
+    promo_code: "SISTERLEO",
+    promo_code_expires_at: new Date(Date.now() + 18 * 24 * 60 * 60 * 1000).toISOString(),
+    editorial_rating: 4.4,
+    verified: true,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
   },
   {
     id: "demo-6",
-    name: "Casino Proxy Portal",
-    slug: "casino-proxy-portal",
-    logo_url: "https://via.placeholder.com/150?text=Proxy",
-    bonus: "Access to restricted casino sites",
+    name: "Casino Review Portal",
+    slug: "casino-review-portal",
+    logo_url: "https://via.placeholder.com/150?text=Review",
+    bonus: "Personal reviews, pros & cons, alternatives, registration help",
     license: "N/A",
-    description: "A proxy service that helps players access casino sites that may be restricted in their region. Provides secure connections and maintains player privacy.",
+    description: "A comprehensive review site that provides personal casino reviews, lists pros and cons, suggests alternatives, helps with registration, provides promo codes, assists with withdrawals, and offers detailed reviews.",
     country: undefined,
     payment_methods: undefined,
     rating_avg: 4.2,
     rating_count: 78,
-    entry_type: "proxy",
-    external_url: "https://example.com/proxy-service",
+    entry_type: "review-site",
+    external_url: "https://example.com/review-service",
     verified: false,
+    is_featured: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: "demo-6b",
+    name: "Casino Analyst Pro",
+    slug: "casino-analyst-pro",
+    logo_url: "https://via.placeholder.com/150?text=Analyst",
+    bonus: "Expert analysis, withdrawal guides, promo code database",
+    license: "N/A",
+    description: "Professional casino analysis site offering expert reviews, detailed pros and cons, withdrawal assistance guides, comprehensive promo code database, and alternative recommendations.",
+    country: undefined,
+    payment_methods: undefined,
+    rating_avg: 4.5,
+    rating_count: 124,
+    entry_type: "review-site",
+    external_url: "https://example.com/analyst-pro",
+    verified: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: "demo-6c",
+    name: "Casino Guide Hub",
+    slug: "casino-guide-hub",
+    logo_url: "https://via.placeholder.com/150?text=Guide",
+    bonus: "Registration help, withdrawal support, detailed reviews",
+    license: "N/A",
+    description: "Your complete guide to online casinos. Provides step-by-step registration help, withdrawal assistance, detailed reviews with pros and cons, and exclusive promo codes.",
+    country: undefined,
+    payment_methods: undefined,
+    rating_avg: 4.3,
+    rating_count: 98,
+    entry_type: "review-site",
+    external_url: "https://example.com/guide-hub",
+    verified: true,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
   },
@@ -244,6 +323,14 @@ export function HomePage() {
     new Set(casinos.map((c) => c.country).filter(Boolean))
   ).sort();
   
+  // Separate by category when showing all types
+  const showByCategory = entryTypeFilter === "all" && !searchQuery && licenseFilter === "all" && countryFilter === "all" && ratingFilter === "all" && !promoCodeFilter && !verifiedFilter && !showFeaturedOnly;
+  
+  const casinoEntries = filteredCasinos.filter((c) => c.entry_type === 'casino' || !c.entry_type);
+  const sisterSiteEntries = filteredCasinos.filter((c) => c.entry_type === 'sister-site');
+  const reviewSiteEntries = filteredCasinos.filter((c) => c.entry_type === 'review-site');
+  const blogEntries = filteredCasinos.filter((c) => c.entry_type === 'blog');
+  
   // Separate featured and regular entries
   const featuredEntries = filteredCasinos.filter((c) => c.is_featured);
   const regularEntries = filteredCasinos.filter((c) => !c.is_featured);
@@ -299,7 +386,7 @@ export function HomePage() {
                 <option value="casino">🎰 Casinos</option>
                 <option value="sister-site">🔗 Sister Sites</option>
                 <option value="blog">💬 Blogs</option>
-                <option value="proxy">🌐 Proxy Sites</option>
+                <option value="review-site">📝 Review Sites</option>
               </select>
             </div>
 
@@ -401,45 +488,129 @@ export function HomePage() {
       </div>
 
       <div>
-        <p className="text-sm sm:text-base text-gray-600 dark:text-white mb-4 px-2">
-          Showing {filteredCasinos.length} entr{filteredCasinos.length !== 1 ? "ies" : "y"}
-        </p>
-
-        {filteredCasinos.length === 0 ? (
-          <div className="text-center py-8 sm:py-12 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 px-4">
-            <p className="text-sm sm:text-base md:text-lg text-gray-600 dark:text-gray-200">
-              No entries found matching your criteria.
-            </p>
-          </div>
-        ) : (
+        {showByCategory ? (
+          // Show by categories when no filters are applied
           <>
-            {featuredEntries.length > 0 && (
-              <div className="mb-6 sm:mb-8">
-                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-3 sm:mb-4 flex items-center gap-2 px-2">
-                  <Sparkles className="text-yellow-500 flex-shrink-0" size={20} style={{ width: '20px', height: '20px' }} />
-                  Featured
-                </h2>
+            {casinoEntries.length > 0 && (
+              <div className="mb-8 sm:mb-10">
+                <div className="flex items-center justify-between mb-4 px-2">
+                  <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                    <span className="text-2xl">🎰</span>
+                    Casinos
+                  </h2>
+                  <Link href="/?entryTypeFilter=casino" className="text-sm text-blue-600 dark:text-blue-400 hover:underline">
+                    View All →
+                  </Link>
+                </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                  {featuredEntries.map((casino) => (
+                  {casinoEntries.slice(0, 6).map((casino) => (
                     <CasinoCard key={casino.id} casino={casino} />
                   ))}
                 </div>
               </div>
             )}
 
-            {regularEntries.length > 0 && (
-              <div>
-                {featuredEntries.length > 0 && (
-                  <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-3 sm:mb-4 px-2">
-                    All Entries
+            {sisterSiteEntries.length > 0 && (
+              <div className="mb-8 sm:mb-10">
+                <div className="flex items-center justify-between mb-4 px-2">
+                  <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                    <span className="text-2xl">🔗</span>
+                    Sister Sites
                   </h2>
-                )}
+                  <Link href="/sister-sites" className="text-sm text-purple-600 dark:text-purple-400 hover:underline">
+                    View All →
+                  </Link>
+                </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                  {regularEntries.map((casino) => (
+                  {sisterSiteEntries.slice(0, 6).map((casino) => (
                     <CasinoCard key={casino.id} casino={casino} />
                   ))}
                 </div>
               </div>
+            )}
+
+            {reviewSiteEntries.length > 0 && (
+              <div className="mb-8 sm:mb-10">
+                <div className="flex items-center justify-between mb-4 px-2">
+                  <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                    <span className="text-2xl">📝</span>
+                    Review Sites
+                  </h2>
+                  <Link href="/review-sites" className="text-sm text-orange-600 dark:text-orange-400 hover:underline">
+                    View All →
+                  </Link>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                  {reviewSiteEntries.slice(0, 6).map((casino) => (
+                    <CasinoCard key={casino.id} casino={casino} />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {blogEntries.length > 0 && (
+              <div className="mb-8 sm:mb-10">
+                <div className="flex items-center justify-between mb-4 px-2">
+                  <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                    <span className="text-2xl">💬</span>
+                    Blogs
+                  </h2>
+                  <Link href="/?entryTypeFilter=blog" className="text-sm text-green-600 dark:text-green-400 hover:underline">
+                    View All →
+                  </Link>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                  {blogEntries.slice(0, 6).map((casino) => (
+                    <CasinoCard key={casino.id} casino={casino} />
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
+        ) : (
+          // Show filtered results when filters are applied
+          <>
+            <p className="text-sm sm:text-base text-gray-600 dark:text-white mb-4 px-2">
+              Showing {filteredCasinos.length} entr{filteredCasinos.length !== 1 ? "ies" : "y"}
+            </p>
+
+            {filteredCasinos.length === 0 ? (
+              <div className="text-center py-8 sm:py-12 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 px-4">
+                <p className="text-sm sm:text-base md:text-lg text-gray-600 dark:text-gray-200">
+                  No entries found matching your criteria.
+                </p>
+              </div>
+            ) : (
+              <>
+                {featuredEntries.length > 0 && (
+                  <div className="mb-6 sm:mb-8">
+                    <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-3 sm:mb-4 flex items-center gap-2 px-2">
+                      <Sparkles className="text-yellow-500 flex-shrink-0" size={20} style={{ width: '20px', height: '20px' }} />
+                      Featured
+                    </h2>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                      {featuredEntries.map((casino) => (
+                        <CasinoCard key={casino.id} casino={casino} />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {regularEntries.length > 0 && (
+                  <div>
+                    {featuredEntries.length > 0 && (
+                      <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-3 sm:mb-4 px-2">
+                        All Entries
+                      </h2>
+                    )}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                      {regularEntries.map((casino) => (
+                        <CasinoCard key={casino.id} casino={casino} />
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </>
         )}

@@ -5,3 +5,6 @@ import { cookies } from 'next/headers';
 export const createSupabaseServerClient = () => {
   return createServerComponentClient({ cookies });
 };
+
+// Alias for compatibility
+export const createSupabaseClient = createSupabaseServerClient;
