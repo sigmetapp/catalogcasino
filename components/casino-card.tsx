@@ -49,12 +49,12 @@ export function CasinoCard({ casino }: CasinoCardProps) {
   const isExternal = (casino.entry_type === 'blog' || casino.entry_type === 'proxy') && casino.external_url;
 
   const CardContent = (
-    <div className="p-6">
-      <div className="flex items-start gap-4">
+    <div className="p-4 sm:p-6">
+      <div className="flex items-start gap-3 sm:gap-4">
         <div className="flex-shrink-0 relative">
           {casino.is_featured && (
-            <div className="absolute -top-2 -right-2 z-10">
-              <Sparkles size={20} className="text-yellow-500 fill-yellow-500" />
+            <div className="absolute -top-1 -right-1 sm:-top-2 sm:-right-2 z-10">
+              <Sparkles size={16} className="sm:w-5 sm:h-5 text-yellow-500 fill-yellow-500" />
             </div>
           )}
           <Image
@@ -62,7 +62,7 @@ export function CasinoCard({ casino }: CasinoCardProps) {
             alt={casino.name}
             width={80}
             height={80}
-            className="rounded-lg object-contain"
+            className="rounded-lg object-contain w-16 h-16 sm:w-20 sm:h-20"
             onError={(e) => {
               (e.target as HTMLImageElement).src = "/placeholder-logo.svg";
             }}
@@ -70,21 +70,21 @@ export function CasinoCard({ casino }: CasinoCardProps) {
         </div>
         
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-2">
-            <h3 className="text-xl font-bold text-gray-900 dark:text-white truncate">
+          <div className="flex items-center gap-1.5 sm:gap-2 mb-2 flex-wrap">
+            <h3 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white truncate flex-1 min-w-0">
               {casino.name}
             </h3>
             {casino.verified && (
-              <span title="Verified">
-                <CheckCircle size={18} className="text-green-500 flex-shrink-0" aria-label="Verified" />
+              <span title="Verified" className="flex-shrink-0">
+                <CheckCircle size={16} className="sm:w-[18px] sm:h-[18px] text-green-500" aria-label="Verified" />
               </span>
             )}
             {isExternal && (
-              <ExternalLink size={16} className="text-gray-400 flex-shrink-0" />
+              <ExternalLink size={14} className="sm:w-4 sm:h-4 text-gray-400 dark:text-gray-500 flex-shrink-0" />
             )}
           </div>
           
-          <div className="flex items-center gap-2 mb-2 flex-wrap">
+          <div className="flex items-center gap-1.5 sm:gap-2 mb-2 flex-wrap">
             <span className={`text-xs px-2 py-1 ${getEntryTypeColor(casino.entry_type)} rounded`}>
               {getEntryTypeLabel(casino.entry_type)}
             </span>
@@ -98,53 +98,53 @@ export function CasinoCard({ casino }: CasinoCardProps) {
           {/* Ratings */}
           <div className="mb-2 space-y-1">
             {editorialStars && (
-              <div className="flex items-center gap-1">
-                <Star size={14} className="text-blue-500 fill-blue-500" />
-                <span className="text-xs text-gray-600 dark:text-gray-400">
+              <div className="flex items-center gap-1 flex-wrap">
+                <Star size={12} className="sm:w-3.5 sm:h-3.5 text-blue-500 fill-blue-500 flex-shrink-0" />
+                <span className="text-xs text-gray-600 dark:text-gray-300">
                   Editorial: {casino.editorial_rating?.toFixed(1)}
                 </span>
               </div>
             )}
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 flex-wrap">
               {stars.map((star, index) => (
                 <Star
                   key={index}
-                  size={14}
-                  className={
+                  size={12}
+                  className={`sm:w-3.5 sm:h-3.5 flex-shrink-0 ${
                     star === 1
                       ? "fill-yellow-400 text-yellow-400"
                       : star === 0.5
                       ? "fill-yellow-400/50 text-yellow-400"
                       : "text-gray-300 dark:text-gray-600"
-                  }
+                  }`}
                 />
               ))}
-              <span className="ml-1 text-xs text-gray-600 dark:text-gray-400">
-                {casino.rating_avg.toFixed(1)} ({casino.rating_count} reviews)
+              <span className="ml-1 text-xs text-gray-600 dark:text-gray-300">
+                {casino.rating_avg.toFixed(1)} ({casino.rating_count})
               </span>
             </div>
           </div>
           
           {/* Promo Code */}
           {isPromoValid && (
-            <div className="mb-2 flex items-center gap-2">
-              <Ticket size={14} className="text-green-600 dark:text-green-400 flex-shrink-0" />
+            <div className="mb-2 flex items-center gap-1.5 sm:gap-2 flex-wrap">
+              <Ticket size={12} className="sm:w-3.5 sm:h-3.5 text-green-600 dark:text-green-400 flex-shrink-0" />
               <span className="text-xs font-semibold text-green-700 dark:text-green-300">
-                Promo: <code className="bg-green-100 dark:bg-green-900 px-1 py-0.5 rounded">{casino.promo_code}</code>
+                Promo: <code className="bg-green-100 dark:bg-green-900 px-1 py-0.5 rounded break-all">{casino.promo_code}</code>
               </span>
             </div>
           )}
           
-          <p className="text-sm text-gray-700 dark:text-gray-300 mb-2">
+          <p className="text-xs sm:text-sm text-gray-700 dark:text-gray-200 mb-2 line-clamp-2">
             <span className="font-semibold">Bonus:</span> {casino.bonus}
           </p>
           
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
             <span className="text-xs px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded">
               {casino.license}
             </span>
             {casino.country && (
-              <span className="text-xs px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded">
+              <span className="text-xs px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded">
                 {casino.country}
               </span>
             )}
@@ -152,8 +152,8 @@ export function CasinoCard({ casino }: CasinoCardProps) {
         </div>
       </div>
       
-      <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-        <span className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1">
+      <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-gray-200 dark:border-gray-700">
+        <span className="text-xs sm:text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1">
           {isExternal ? 'Visit Site' : 'Read Reviews'} →
         </span>
       </div>

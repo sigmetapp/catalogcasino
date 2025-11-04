@@ -54,15 +54,15 @@ export function Header() {
   return (
     <header className="bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg">
       <div className="container mx-auto px-4 py-4">
-        <div className="flex items-center justify-between">
-          <Link href="/" className="text-2xl font-bold hover:opacity-80 transition-opacity">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <Link href="/" className="text-xl sm:text-2xl font-bold hover:opacity-80 transition-opacity">
             🎰 Casino Directory
           </Link>
           
-          <nav className="flex items-center gap-4">
+          <nav className="flex flex-wrap items-center gap-2 sm:gap-4 w-full sm:w-auto justify-end">
             <Link
               href="/"
-              className="hover:opacity-80 transition-opacity px-3 py-2 rounded"
+              className="hover:opacity-80 transition-opacity px-2 sm:px-3 py-2 rounded text-sm sm:text-base"
             >
               Home
             </Link>
@@ -70,42 +70,44 @@ export function Header() {
             {isAdmin && (
               <Link
                 href="/admin"
-                className="hover:opacity-80 transition-opacity px-3 py-2 rounded flex items-center gap-2"
+                className="hover:opacity-80 transition-opacity px-2 sm:px-3 py-2 rounded flex items-center gap-1 sm:gap-2 text-sm sm:text-base"
               >
-                <Shield size={18} />
-                Admin
+                <Shield size={16} className="sm:w-[18px] sm:h-[18px]" />
+                <span className="hidden sm:inline">Admin</span>
               </Link>
             )}
             
             <button
               onClick={toggleTheme}
-              className="p-2 rounded-full hover:bg-white/20 transition-colors"
+              className="p-2 rounded-full hover:bg-white/20 transition-colors flex-shrink-0"
               aria-label="Toggle theme"
             >
-              {theme === "light" ? <Moon size={20} /> : <Sun size={20} />}
+              {theme === "light" ? <Moon size={18} className="sm:w-5 sm:h-5" /> : <Sun size={18} className="sm:w-5 sm:h-5" />}
             </button>
             
             {user ? (
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2 px-3 py-2 rounded bg-white/10">
-                  <User size={18} />
-                  <span className="text-sm">{user.email?.split("@")[0]}</span>
+              <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2 sm:gap-3">
+                <div className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded bg-white/10 text-xs sm:text-sm">
+                  <User size={16} className="sm:w-[18px] sm:h-[18px]" />
+                  <span className="max-w-[100px] sm:max-w-none truncate">{user.email?.split("@")[0]}</span>
                 </div>
                 <button
                   onClick={handleSignOut}
-                  className="flex items-center gap-2 px-4 py-2 rounded bg-white/20 hover:bg-white/30 transition-colors"
+                  className="flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded bg-white/20 hover:bg-white/30 transition-colors text-xs sm:text-sm"
                 >
-                  <LogOut size={18} />
-                  Sign Out
+                  <LogOut size={16} className="sm:w-[18px] sm:h-[18px]" />
+                  <span className="hidden sm:inline">Sign Out</span>
+                  <span className="sm:hidden">Out</span>
                 </button>
               </div>
             ) : (
               <button
                 onClick={handleSignIn}
-                className="flex items-center gap-2 px-4 py-2 rounded bg-white/20 hover:bg-white/30 transition-colors"
+                className="flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded bg-white/20 hover:bg-white/30 transition-colors text-xs sm:text-sm"
               >
-                <LogIn size={18} />
-                Sign In
+                <LogIn size={16} className="sm:w-[18px] sm:h-[18px]" />
+                <span className="hidden sm:inline">Sign In</span>
+                <span className="sm:hidden">In</span>
               </button>
             )}
           </nav>

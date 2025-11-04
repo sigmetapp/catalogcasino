@@ -36,27 +36,27 @@ export function ReviewCard({ review, onDelete, showDelete = false }: ReviewCardP
   const canDelete = showDelete && (isAdmin || user?.id === review.user_id);
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-      <div className="flex items-start justify-between mb-2">
-        <div className="flex-1">
-          <div className="flex items-center gap-3 mb-2">
-            <h4 className="font-semibold text-gray-900 dark:text-white">
+    <div className="bg-white dark:bg-gray-800 rounded-lg p-3 sm:p-4 border border-gray-200 dark:border-gray-700">
+      <div className="flex items-start justify-between gap-2 sm:gap-4 mb-2">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 sm:gap-3 mb-2 flex-wrap">
+            <h4 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white">
               {review.username}
             </h4>
-            <RatingStars rating={review.rating} size={16} />
-            <span className="text-sm text-gray-500 dark:text-gray-400">
+            <RatingStars rating={review.rating} size={14} />
+            <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">
               {formatDate(review.created_at)}
             </span>
           </div>
-          <p className="text-gray-700 dark:text-gray-300">{review.comment}</p>
+          <p className="text-sm sm:text-base text-gray-700 dark:text-gray-200 break-words">{review.comment}</p>
         </div>
         {canDelete && onDelete && (
           <button
             onClick={onDelete}
-            className="ml-4 p-2 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+            className="ml-2 sm:ml-4 p-1.5 sm:p-2 text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors flex-shrink-0"
             aria-label="Delete review"
           >
-            <Trash2 size={18} />
+            <Trash2 size={16} className="sm:w-[18px] sm:h-[18px]" />
           </button>
         )}
       </div>
